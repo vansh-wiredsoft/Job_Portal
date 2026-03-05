@@ -19,8 +19,6 @@ import {
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import LogoutIcon from "@mui/icons-material/Logout";
 import MenuIcon from "@mui/icons-material/Menu";
-import KeyboardDoubleArrowLeftIcon from "@mui/icons-material/KeyboardDoubleArrowLeft";
-import KeyboardDoubleArrowRightIcon from "@mui/icons-material/KeyboardDoubleArrowRight";
 import { useNavigate } from "react-router-dom";
 import { clearAuthSession, getUserProfile } from "../../utils/roleHelper";
 
@@ -67,12 +65,20 @@ export default function Layout({ children, role = "admin", title }) {
     navigate("/login", { replace: true });
   };
 
+  const handleSidebarAction = () => {
+    if (window.innerWidth < 900) {
+      setMobileOpen(true);
+      return;
+    }
+    setSidebarCollapsed((prev) => !prev);
+  };
+
   const activeDrawerWidth = sidebarCollapsed ? collapsedDrawerWidth : drawerWidth;
 
   const drawer = (
     <Box sx={{ height: "100%", p: 2.5 }}>
       <Typography variant="h6" sx={{ fontWeight: 800, mb: 2, whiteSpace: "nowrap" }}>
-        {sidebarCollapsed ? "JP" : "Job Portal"}
+        {sidebarCollapsed ? "JP" : "Google Dashboard"}
       </Typography>
       {!sidebarCollapsed && (
         <Typography variant="body2" sx={{ color: "text.secondary", mb: 3 }}>
@@ -132,24 +138,13 @@ export default function Layout({ children, role = "admin", title }) {
           <IconButton
             color="inherit"
             edge="start"
-            onClick={() => setMobileOpen(true)}
-            sx={{ mr: 2, display: { md: "none" } }}
+            onClick={handleSidebarAction}
+            sx={{ mr: 2 }}
           >
             <MenuIcon />
           </IconButton>
-          <IconButton
-            color="inherit"
-            onClick={() => setSidebarCollapsed((prev) => !prev)}
-            sx={{ mr: 1.2, display: { xs: "none", md: "inline-flex" } }}
-          >
-            {sidebarCollapsed ? (
-              <KeyboardDoubleArrowRightIcon />
-            ) : (
-              <KeyboardDoubleArrowLeftIcon />
-            )}
-          </IconButton>
           <Typography variant="h6" sx={{ fontWeight: 700 }}>
-            {title || "Job Portal"}
+            {title || "Google Dashboard"}
           </Typography>
 
           <Box sx={{ ml: "auto", display: "flex", alignItems: "center", gap: 1.2 }}>

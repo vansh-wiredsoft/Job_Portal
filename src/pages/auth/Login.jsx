@@ -4,40 +4,64 @@ import {
   Alert,
   Box,
   Button,
-  MenuItem,
+  CircularProgress,
   Paper,
-  Select,
   Stack,
   TextField,
   Typography,
 } from "@mui/material";
+import api from "../../services/api";
 import { setAuthSession } from "../../utils/roleHelper";
 
 export default function Login() {
   const navigate = useNavigate();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [role, setRole] = useState("admin");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = (event) => {
+  const handleLogin = async (event) => {
     event.preventDefault();
-    if (!name.trim() || !email.trim()) {
-      setError("Please enter both name and email.");
+    setError("");
+
+    if (!username.trim() || !password.trim()) {
+      setError("Please enter both username and password.");
       return;
     }
 
-    setAuthSession({
-      role,
-      name: name.trim(),
-      email: email.trim(),
-    });
+    setLoading(true);
+    try {
+      const response = await api.post("/authentication/api/v1/auth/login", {
+        username: username.trim(),
+        password,
+      });
 
-    if (role === "admin") {
-      navigate("/admin/dashboard", { replace: true });
-      return;
+      const { access_token: accessToken, user } = response.data || {};
+      if (!accessToken || !user) {
+        setError("Login response is invalid.");
+        return;
+      }
+
+      const normalizedRole = String(user.role || "").toLowerCase();
+      setAuthSession({
+        token: accessToken,
+        role: normalizedRole,
+        name: user.username,
+        email: user.email,
+        id: user.id,
+      });
+
+      const target = normalizedRole === "admin" ? "/admin/dashboard" : "/user/dashboard";
+      navigate(target, { replace: true });
+    } catch (requestError) {
+      const message =
+        requestError?.response?.data?.message ||
+        requestError?.response?.data?.detail ||
+        "Invalid credentials or server unavailable.";
+      setError(message);
+    } finally {
+      setLoading(false);
     }
-    navigate("/user/dashboard", { replace: true });
   };
 
   return (
@@ -73,25 +97,21 @@ export default function Login() {
 
           <TextField
             fullWidth
-            label="Full Name"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
+            label="Username"
+            value={username}
+            onChange={(event) => setUsername(event.target.value)}
           />
 
           <TextField
             fullWidth
-            label="Email Address"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
+            label="Password"
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
           />
 
-          <Select value={role} onChange={(event) => setRole(event.target.value)} fullWidth>
-            <MenuItem value="admin">Admin</MenuItem>
-            <MenuItem value="user">User</MenuItem>
-          </Select>
-
-          <Button type="submit" variant="contained" size="large">
-            Login
+          <Button type="submit" variant="contained" size="large" disabled={loading}>
+            {loading ? <CircularProgress size={22} color="inherit" /> : "Login"}
           </Button>
         </Stack>
       </Paper>

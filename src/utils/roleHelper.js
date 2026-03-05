@@ -7,18 +7,20 @@ export const getRole = () => localStorage.getItem(ROLE_KEY);
 
 export const isAuthenticated = () => localStorage.getItem(AUTH_KEY) === "true";
 
-export const setAuthSession = ({ role, name, email }) => {
-  const token = `fake-jwt-${role}-${Date.now()}`;
+export const setAuthSession = ({ role, name, email, token, id }) => {
+  const normalizedRole = String(role || "").toLowerCase();
+  const accessToken = token || `fake-jwt-${normalizedRole}-${Date.now()}`;
   localStorage.setItem(AUTH_KEY, "true");
-  localStorage.setItem(ROLE_KEY, role);
-  localStorage.setItem(TOKEN_KEY, token);
+  localStorage.setItem(ROLE_KEY, normalizedRole);
+  localStorage.setItem(TOKEN_KEY, accessToken);
   localStorage.setItem(
     USER_KEY,
     JSON.stringify({
+      id,
       name,
       email,
-      role,
-      token,
+      role: normalizedRole,
+      token: accessToken,
     }),
   );
 };
