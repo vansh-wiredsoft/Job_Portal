@@ -25,13 +25,9 @@ import {
   createSession,
   resetSessionFlow,
 } from "../../store/sessionSlice";
+import { fetchCompanies } from "../../store/companySlice";
 
 const QUESTION_PATH = "/config/api/v1/kpiquestions";
-
-const companies = [
-  { id: "6e74b157-fbeb-43ab-9ee8-1eb54ae92976", name: "Ally Wired Soft Solutions" },
-  { id: "6e74b157-fbeb-43ab-9ee8-1eb54ae92977", name: "Bharti Airtel Limited" },
-];
 
 const pickArray = (payload) => {
   if (Array.isArray(payload)) return payload;
@@ -58,6 +54,9 @@ export default function Sessions() {
     addMessage,
     error: sessionError,
   } = useSelector((state) => state.session);
+  const { companies, companiesLoading, error: companiesError } = useSelector(
+    (state) => state.company,
+  );
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -87,6 +86,10 @@ export default function Sessions() {
 
     loadQuestions();
   }, []);
+
+  useEffect(() => {
+    dispatch(fetchCompanies());
+  }, [dispatch]);
 
   useEffect(() => {
     return () => {
@@ -188,6 +191,7 @@ export default function Sessions() {
             <Stack spacing={2}>
               {!!formError && <Alert severity="error">{formError}</Alert>}
               {!!sessionError && <Alert severity="error">{sessionError}</Alert>}
+              {!!companiesError && <Alert severity="error">{companiesError}</Alert>}
               {!!createMessage && <Alert severity="success">{createMessage}</Alert>}
               {!!addMessage && <Alert severity="success">{addMessage}</Alert>}
 
@@ -223,7 +227,7 @@ export default function Sessions() {
                     clearLocalAndReduxErrors();
                     setCompanyId(event.target.value);
                   }}
-                  disabled={!!createdSession}
+                  disabled={!!createdSession || companiesLoading}
                 >
                   <MenuItem value="">Select Company</MenuItem>
                   {companies.map((company) => (
