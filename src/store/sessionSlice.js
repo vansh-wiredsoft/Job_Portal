@@ -6,11 +6,15 @@ const SESSION_PATH = "/config/api/v1/sessions";
 const initialState = {
   createdSession: null,
   addedQuestions: [],
+  sessions: [],
   createLoading: false,
   addLoading: false,
+  listLoading: false,
   createMessage: "",
   addMessage: "",
+  listMessage: "",
   error: null,
+  listError: null,
 };
 
 export const createSession = createAsyncThunk(
@@ -69,12 +73,40 @@ export const addQuestionsToSession = createAsyncThunk(
   },
 );
 
+export const fetchSessions = createAsyncThunk(
+  "session/fetchSessions",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await api.get(SESSION_PATH);
+      const payload = response?.data || {};
+
+      if (!payload?.success) {
+        return rejectWithValue(payload?.message || "Failed to fetch sessions.");
+      }
+
+      return {
+        sessions: Array.isArray(payload?.data) ? payload.data : [],
+        message: payload?.message || "Sessions fetched successfully.",
+      };
+    } catch (error) {
+      const message =
+        error?.response?.data?.message ||
+        error?.response?.data?.detail ||
+        "Failed to fetch sessions due to server/network error.";
+      return rejectWithValue(message);
+    }
+  },
+);
+
 const sessionSlice = createSlice({
   name: "session",
   initialState,
   reducers: {
     clearSessionError(state) {
       state.error = null;
+    },
+    clearSessionListError(state) {
+      state.listError = null;
     },
     clearSessionMessages(state) {
       state.createMessage = "";
@@ -120,10 +152,27 @@ const sessionSlice = createSlice({
       .addCase(addQuestionsToSession.rejected, (state, action) => {
         state.addLoading = false;
         state.error = action.payload || "Failed to add questions.";
+      })
+      .addCase(fetchSessions.pending, (state) => {
+        state.listLoading = true;
+        state.listError = null;
+      })
+      .addCase(fetchSessions.fulfilled, (state, action) => {
+        state.listLoading = false;
+        state.sessions = action.payload.sessions;
+        state.listMessage = action.payload.message;
+      })
+      .addCase(fetchSessions.rejected, (state, action) => {
+        state.listLoading = false;
+        state.listError = action.payload || "Failed to fetch sessions.";
       });
   },
 });
 
-export const { clearSessionError, clearSessionMessages, resetSessionFlow } =
-  sessionSlice.actions;
+export const {
+  clearSessionError,
+  clearSessionListError,
+  clearSessionMessages,
+  resetSessionFlow,
+} = sessionSlice.actions;
 export default sessionSlice.reducer;

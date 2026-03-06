@@ -15,17 +15,25 @@ import {
   Stack,
   TextField,
   Typography,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
+import { DataGrid } from "@mui/x-data-grid";
 import Layout from "../../layouts/commonLayout/Layout";
 import api from "../../services/api";
 import {
   addQuestionsToSession,
   clearSessionError,
+  clearSessionListError,
   clearSessionMessages,
   createSession,
+  fetchSessions,
   resetSessionFlow,
 } from "../../store/sessionSlice";
 import { fetchCompanies } from "../../store/companySlice";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 const QUESTION_HIERARCHY_PATH = "/config/api/v1/kpiquestions/hierarchy";
 
@@ -48,15 +56,20 @@ export default function Sessions() {
   const {
     createdSession,
     addedQuestions,
+    sessions,
     createLoading,
     addLoading,
+    listLoading,
     createMessage,
     addMessage,
     error: sessionError,
+    listError,
   } = useSelector((state) => state.session);
-  const { companies, companiesLoading, error: companiesError } = useSelector(
-    (state) => state.company,
-  );
+  const {
+    companies,
+    companiesLoading,
+    error: companiesError,
+  } = useSelector((state) => state.company);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -73,7 +86,9 @@ export default function Sessions() {
     [companyId],
   );
   const selectedTheme = useMemo(
-    () => questionHierarchy.find((theme) => theme.theme_key === selectedThemeKey) || null,
+    () =>
+      questionHierarchy.find((theme) => theme.theme_key === selectedThemeKey) ||
+      null,
     [questionHierarchy, selectedThemeKey],
   );
   const kpiOptions = useMemo(
@@ -85,7 +100,9 @@ export default function Sessions() {
     [kpiOptions, selectedKpiKey],
   );
   const questions = useMemo(() => {
-    const raw = Array.isArray(selectedKpi?.questions) ? selectedKpi.questions : [];
+    const raw = Array.isArray(selectedKpi?.questions)
+      ? selectedKpi.questions
+      : [];
     return raw.map(normalizeQuestion);
   }, [selectedKpi]);
 
@@ -107,6 +124,7 @@ export default function Sessions() {
 
   useEffect(() => {
     dispatch(fetchCompanies());
+    dispatch(fetchSessions());
   }, [dispatch]);
 
   useEffect(() => {
@@ -118,6 +136,7 @@ export default function Sessions() {
   const clearLocalAndReduxErrors = () => {
     if (formError) setFormError("");
     if (sessionError) dispatch(clearSessionError());
+    if (listError) dispatch(clearSessionListError());
   };
 
   const toggleQuestion = (questionId) => {
@@ -145,6 +164,7 @@ export default function Sessions() {
           companyId,
         }),
       ).unwrap();
+      dispatch(fetchSessions());
     } catch {
       // Error is already captured in redux state.
     }
@@ -184,7 +204,105 @@ export default function Sessions() {
     setSelectedQuestions([]);
     setFormError("");
     dispatch(resetSessionFlow());
+    dispatch(fetchSessions());
   };
+
+  const sessionRows = useMemo(
+    () =>
+      sessions.map((session) => ({
+        ...session,
+        id: session.id,
+        company_name:
+          companies.find((company) => company.id === session.company_id)
+            ?.name || session.company_id,
+      })),
+    [sessions, companies],
+  );
+
+  const handleViewSession = (row) => {
+    console.log("View session:", row);
+  };
+
+  const handleEditSession = (row) => {
+    console.log("Edit session:", row);
+  };
+
+  const handleDeleteSession = (row) => {
+    console.log("Delete session:", row);
+  };
+
+  const sessionColumns = useMemo(
+    () => [
+      { field: "title", headerName: "Title", flex: 1.1, minWidth: 140 },
+      {
+        field: "description",
+        headerName: "Description",
+        flex: 1.6,
+        minWidth: 220,
+      },
+      {
+        field: "company_name",
+        headerName: "Company",
+        flex: 1.2,
+        minWidth: 180,
+      },
+      {
+        field: "is_active",
+        headerName: "Active",
+        minWidth: 90,
+        renderCell: ({ value }) => (value ? "Yes" : "No"),
+      },
+      {
+        field: "created_at",
+        headerName: "Created At",
+        flex: 1.2,
+        minWidth: 180,
+        valueFormatter: (value) =>
+          value ? new Date(value).toLocaleString() : "-",
+      },
+      {
+        field: "actions",
+        headerName: "Actions",
+        minWidth: 150,
+        sortable: false,
+        filterable: false,
+        renderCell: (params) => (
+          <Stack direction="row" spacing={0.5}>
+            <Tooltip title="View">
+              <IconButton
+                size="small"
+                color="primary"
+                onClick={() => handleViewSession(params.row)}
+              >
+                <VisibilityIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+
+            <Tooltip title="Edit">
+              <IconButton
+                size="small"
+                color="secondary"
+                onClick={() => handleEditSession(params.row)}
+              >
+                <EditIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+
+            <Tooltip title="Delete">
+              <IconButton
+                size="small"
+                color="error"
+                onClick={() => handleDeleteSession(params.row)}
+              >
+                <DeleteIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </Stack>
+        ),
+      },
+    ],
+    [],
+  );
 
   return (
     <Layout role="admin" title="Create Session">
@@ -204,15 +322,19 @@ export default function Sessions() {
               Session Details
             </Typography>
             <Typography color="text.secondary" sx={{ mb: 2.5 }}>
-              Create session first, then select questions and add them to the created
-              session.
+              Create session first, then select questions and add them to the
+              created session.
             </Typography>
 
             <Stack spacing={2}>
               {!!formError && <Alert severity="error">{formError}</Alert>}
               {!!sessionError && <Alert severity="error">{sessionError}</Alert>}
-              {!!companiesError && <Alert severity="error">{companiesError}</Alert>}
-              {!!createMessage && <Alert severity="success">{createMessage}</Alert>}
+              {!!companiesError && (
+                <Alert severity="error">{companiesError}</Alert>
+              )}
+              {!!createMessage && (
+                <Alert severity="success">{createMessage}</Alert>
+              )}
               {!!addMessage && <Alert severity="success">{addMessage}</Alert>}
 
               <TextField
@@ -259,14 +381,21 @@ export default function Sessions() {
               </FormControl>
 
               {!createdSession && (
-                <Button variant="contained" onClick={handleCreateSession} disabled={createLoading}>
+                <Button
+                  variant="contained"
+                  onClick={handleCreateSession}
+                  disabled={createLoading}
+                >
                   {createLoading ? "Creating Session..." : "Create Session"}
                 </Button>
               )}
 
               {!!createdSession && (
                 <Box>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
+                  <Typography
+                    variant="subtitle1"
+                    sx={{ fontWeight: 700, mb: 1 }}
+                  >
                     Add Questions
                   </Typography>
                   {loadingQuestions ? (
@@ -290,7 +419,10 @@ export default function Sessions() {
                         >
                           <MenuItem value="">Select Theme</MenuItem>
                           {questionHierarchy.map((theme) => (
-                            <MenuItem key={theme.theme_key} value={theme.theme_key}>
+                            <MenuItem
+                              key={theme.theme_key}
+                              value={theme.theme_key}
+                            >
                               {theme.theme_display_name || theme.theme_key}
                             </MenuItem>
                           ))}
@@ -325,7 +457,9 @@ export default function Sessions() {
                               key={question.id}
                               control={
                                 <Checkbox
-                                  checked={selectedQuestions.includes(question.id)}
+                                  checked={selectedQuestions.includes(
+                                    question.id,
+                                  )}
                                   onChange={() => toggleQuestion(question.id)}
                                 />
                               }
@@ -433,12 +567,50 @@ export default function Sessions() {
                 <Stack spacing={0.8}>
                   {addedQuestions.map((item) => (
                     <Typography key={item.question_id} variant="body2">
-                      {item.display_order}. {item.question_text} ({item.question_code})
+                      {item.display_order}. {item.question_text} (
+                      {item.question_code})
                     </Typography>
                   ))}
                 </Stack>
               </Paper>
             )}
+          </Paper>
+        </Grid>
+
+        <Grid size={{ xs: 12 }}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: { xs: 2, sm: 3 },
+              borderRadius: 3,
+              border: "1px solid",
+              borderColor: "divider",
+              bgcolor: "rgba(255,255,255,0.86)",
+            }}
+          >
+            <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
+              Sessions Listing
+            </Typography>
+            {!!listError && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {listError}
+              </Alert>
+            )}
+
+            <Box sx={{ height: 420, width: "100%" }}>
+              <DataGrid
+                loading={listLoading}
+                rows={sessionRows}
+                columns={sessionColumns}
+                disableRowSelectionOnClick
+                pageSizeOptions={[10, 25, 50]}
+                initialState={{
+                  pagination: {
+                    paginationModel: { pageSize: 10, page: 0 },
+                  },
+                }}
+              />
+            </Box>
           </Paper>
         </Grid>
       </Grid>
