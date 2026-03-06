@@ -153,18 +153,20 @@ export default function ExcelUploadGrid({
         </Paper>
       )}
 
-      <Box sx={{ height: 470, width: "100%" }}>
-        <DataGrid
-          rows={rows}
-          columns={columns}
-          disableRowSelectionOnClick
-          pageSizeOptions={[10, 25, 50]}
-          initialState={{
-            pagination: {
-              paginationModel: { pageSize: 10, page: 0 },
-            },
-          }}
-        />
+      <Box sx={{ width: "100%", overflowX: "auto" }}>
+        <Box sx={{ height: 470, minWidth: Math.max(900, columns.length * 170) }}>
+          <DataGrid
+            rows={rows}
+            columns={columns}
+            disableRowSelectionOnClick
+            pageSizeOptions={[10, 25, 50]}
+            initialState={{
+              pagination: {
+                paginationModel: { pageSize: 10, page: 0 },
+              },
+            }}
+          />
+        </Box>
       </Box>
     </Paper>
   );

@@ -17,16 +17,24 @@ import {
   Typography,
   IconButton,
   Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Divider,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import Layout from "../../layouts/commonLayout/Layout";
 import api from "../../services/api";
 import {
   addQuestionsToSession,
+  clearSessionDetailError,
+  clearSessionDetails,
   clearSessionError,
   clearSessionListError,
   clearSessionMessages,
   createSession,
+  fetchSessionById,
   fetchSessions,
   resetSessionFlow,
 } from "../../store/sessionSlice";
@@ -61,10 +69,14 @@ export default function Sessions() {
     createLoading,
     addLoading,
     listLoading,
+    detailLoading,
     createMessage,
     addMessage,
+    detailMessage,
     error: sessionError,
     listError,
+    detailError,
+    sessionDetails,
   } = useSelector((state) => state.session);
   const {
     companies,
@@ -81,6 +93,7 @@ export default function Sessions() {
   const [questionHierarchy, setQuestionHierarchy] = useState([]);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
   const [formError, setFormError] = useState("");
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
 
   const selectedCompanyName = useMemo(
     () => companies.find((company) => company.id === companyId)?.name || "",
@@ -138,6 +151,7 @@ export default function Sessions() {
     if (formError) setFormError("");
     if (sessionError) dispatch(clearSessionError());
     if (listError) dispatch(clearSessionListError());
+    if (detailError) dispatch(clearSessionDetailError());
   };
 
   const toggleQuestion = (questionId) => {
@@ -220,8 +234,13 @@ export default function Sessions() {
     [sessions, companies],
   );
 
-  const handleViewSession = (row) => {
-    console.log("View session:", row);
+  const handleViewSession = async (row) => {
+    setViewDialogOpen(true);
+    try {
+      await dispatch(fetchSessionById(row.id)).unwrap();
+    } catch {
+      // Error is already captured in redux state.
+    }
   };
 
   const handleEditSession = (row) => {
@@ -342,6 +361,11 @@ export default function Sessions() {
     ],
     [],
   );
+
+  const handleCloseViewDialog = () => {
+    setViewDialogOpen(false);
+    dispatch(clearSessionDetails());
+  };
 
   return (
     <Layout role="admin" title="Create Session">
@@ -652,23 +676,105 @@ export default function Sessions() {
               </Alert>
             )}
 
-            <Box sx={{ height: 420, width: "100%" }}>
-              <DataGrid
-                loading={listLoading}
-                rows={sessionRows}
-                columns={sessionColumns}
-                disableRowSelectionOnClick
-                pageSizeOptions={[10, 25, 50]}
-                initialState={{
-                  pagination: {
-                    paginationModel: { pageSize: 10, page: 0 },
-                  },
-                }}
-              />
+            <Box sx={{ width: "100%", overflowX: "auto" }}>
+              <Box sx={{ minWidth: 980, height: 420 }}>
+                <DataGrid
+                  loading={listLoading}
+                  rows={sessionRows}
+                  columns={sessionColumns}
+                  disableRowSelectionOnClick
+                  pageSizeOptions={[10, 25, 50]}
+                  initialState={{
+                    pagination: {
+                      paginationModel: { pageSize: 10, page: 0 },
+                    },
+                  }}
+                />
+              </Box>
             </Box>
           </Paper>
         </Grid>
       </Grid>
+
+      <Dialog
+        open={viewDialogOpen}
+        onClose={handleCloseViewDialog}
+        fullWidth
+        maxWidth="md"
+      >
+        <DialogTitle>Session Details</DialogTitle>
+        <DialogContent dividers>
+          {detailLoading && (
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ py: 2 }}>
+              <CircularProgress size={18} />
+              <Typography>Loading session details...</Typography>
+            </Stack>
+          )}
+
+          {!!detailError && !detailLoading && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {detailError}
+            </Alert>
+          )}
+
+          {!!detailMessage && !detailLoading && !detailError && (
+            <Alert severity="success" sx={{ mb: 2 }}>
+              {detailMessage}
+            </Alert>
+          )}
+
+          {!!sessionDetails && !detailLoading && (
+            <Stack spacing={2}>
+              <Paper variant="outlined" sx={{ p: 1.5, borderRadius: 2 }}>
+                <Typography variant="subtitle2">
+                  {sessionDetails.title || "-"}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {sessionDetails.description || "-"}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Session ID: {sessionDetails.id}
+                </Typography>
+              </Paper>
+
+              {(sessionDetails.themes || []).map((theme) => (
+                <Paper key={theme.theme_key} variant="outlined" sx={{ p: 1.5, borderRadius: 2 }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                    {theme.theme_display_name || theme.theme_key}
+                  </Typography>
+                  <Divider sx={{ my: 1 }} />
+
+                  <Stack spacing={1.5}>
+                    {(theme.kpis || []).map((kpi) => (
+                      <Box key={kpi.kpi_key}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                          KPI: {kpi.display_name || kpi.kpi_key}
+                        </Typography>
+                        <Stack spacing={0.7} sx={{ mt: 0.8 }}>
+                          {(kpi.questions || []).map((question) => (
+                            <Typography key={question.question_id} variant="body2">
+                              {question.display_order}. {question.question_text} (
+                              {question.question_code})
+                            </Typography>
+                          ))}
+                          {!kpi.questions?.length && (
+                            <Typography variant="body2" color="text.secondary">
+                              No questions.
+                            </Typography>
+                          )}
+                        </Stack>
+                      </Box>
+                    ))}
+                  </Stack>
+                </Paper>
+              ))}
+            </Stack>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseViewDialog}>Close</Button>
+        </DialogActions>
+      </Dialog>
     </Layout>
   );
 }

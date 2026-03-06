@@ -7,14 +7,18 @@ const initialState = {
   createdSession: null,
   addedQuestions: [],
   sessions: [],
+  sessionDetails: null,
   createLoading: false,
   addLoading: false,
   listLoading: false,
+  detailLoading: false,
   createMessage: "",
   addMessage: "",
   listMessage: "",
+  detailMessage: "",
   error: null,
   listError: null,
+  detailError: null,
 };
 
 export const createSession = createAsyncThunk(
@@ -98,6 +102,33 @@ export const fetchSessions = createAsyncThunk(
   },
 );
 
+export const fetchSessionById = createAsyncThunk(
+  "session/fetchSessionById",
+  async (sessionId, { rejectWithValue }) => {
+    try {
+      const response = await api.get(`${SESSION_PATH}/${sessionId}`);
+      const payload = response?.data || {};
+
+      if (!payload?.success || !payload?.data) {
+        return rejectWithValue(
+          payload?.message || "Failed to fetch session details.",
+        );
+      }
+
+      return {
+        sessionDetails: payload.data,
+        message: payload?.message || "Session details fetched successfully.",
+      };
+    } catch (error) {
+      const message =
+        error?.response?.data?.message ||
+        error?.response?.data?.detail ||
+        "Failed to fetch session details due to server/network error.";
+      return rejectWithValue(message);
+    }
+  },
+);
+
 const sessionSlice = createSlice({
   name: "session",
   initialState,
@@ -107,6 +138,15 @@ const sessionSlice = createSlice({
     },
     clearSessionListError(state) {
       state.listError = null;
+    },
+    clearSessionDetailError(state) {
+      state.detailError = null;
+    },
+    clearSessionDetails(state) {
+      state.sessionDetails = null;
+      state.detailMessage = "";
+      state.detailError = null;
+      state.detailLoading = false;
     },
     clearSessionMessages(state) {
       state.createMessage = "";
@@ -165,6 +205,20 @@ const sessionSlice = createSlice({
       .addCase(fetchSessions.rejected, (state, action) => {
         state.listLoading = false;
         state.listError = action.payload || "Failed to fetch sessions.";
+      })
+      .addCase(fetchSessionById.pending, (state) => {
+        state.detailLoading = true;
+        state.detailError = null;
+        state.detailMessage = "";
+      })
+      .addCase(fetchSessionById.fulfilled, (state, action) => {
+        state.detailLoading = false;
+        state.sessionDetails = action.payload.sessionDetails;
+        state.detailMessage = action.payload.message;
+      })
+      .addCase(fetchSessionById.rejected, (state, action) => {
+        state.detailLoading = false;
+        state.detailError = action.payload || "Failed to fetch session details.";
       });
   },
 });
@@ -172,6 +226,8 @@ const sessionSlice = createSlice({
 export const {
   clearSessionError,
   clearSessionListError,
+  clearSessionDetailError,
+  clearSessionDetails,
   clearSessionMessages,
   resetSessionFlow,
 } = sessionSlice.actions;
