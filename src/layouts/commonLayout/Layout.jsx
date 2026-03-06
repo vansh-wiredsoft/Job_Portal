@@ -22,19 +22,29 @@ import MenuIcon from "@mui/icons-material/Menu";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../../store/authSlice";
+import DashboardIcon from "@mui/icons-material/Dashboard";
+import BusinessIcon from "@mui/icons-material/Business";
+import PeopleIcon from "@mui/icons-material/People";
+import QuizIcon from "@mui/icons-material/Quiz";
+import EventIcon from "@mui/icons-material/Event";
+import PersonIcon from "@mui/icons-material/Person";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 
 const drawerWidth = 260;
 const collapsedDrawerWidth = 88;
 
 const adminItems = [
-  { label: "Dashboard", to: "/admin/dashboard" },
-  { label: "Company Data", to: "/admin/company-data" },
-  { label: "Company Users", to: "/admin/company-users" },
-  { label: "Questions", to: "/admin/questions" },
-  { label: "Sessions", to: "/admin/sessions" },
+  { label: "Dashboard", to: "/admin/dashboard", icon: <DashboardIcon /> },
+  { label: "Company Data", to: "/admin/company-data", icon: <BusinessIcon /> },
+  { label: "Company Users", to: "/admin/company-users", icon: <PeopleIcon /> },
+  { label: "Questions", to: "/admin/questions", icon: <QuizIcon /> },
+  { label: "Sessions", to: "/admin/sessions", icon: <EventIcon /> },
 ];
 
-const userItems = [{ label: "Dashboard", to: "/user/dashboard" }];
+const userItems = [
+  { label: "Dashboard", to: "/user/dashboard", icon: <DashboardIcon /> },
+];
 
 export default function Layout({ children, role = "admin", title }) {
   const dispatch = useDispatch();
@@ -50,8 +60,14 @@ export default function Layout({ children, role = "admin", title }) {
 
   const navItems =
     effectiveRole === "user"
-      ? [...userItems, { label: "My Profile", to: "/profile" }]
-      : [...adminItems, { label: "My Profile", to: "/profile" }];
+      ? [
+          ...userItems,
+          { label: "My Profile", to: "/profile", icon: <PersonIcon /> },
+        ]
+      : [
+          ...adminItems,
+          { label: "My Profile", to: "/profile", icon: <PersonIcon /> },
+        ];
 
   const displayName = profile?.name || "Portal User";
   const displayRole = (profile?.role || effectiveRole).toUpperCase();
@@ -78,13 +94,38 @@ export default function Layout({ children, role = "admin", title }) {
     setSidebarCollapsed((prev) => !prev);
   };
 
-  const activeDrawerWidth = sidebarCollapsed ? collapsedDrawerWidth : drawerWidth;
+  const activeDrawerWidth = sidebarCollapsed
+    ? collapsedDrawerWidth
+    : drawerWidth;
 
   const drawer = (
     <Box sx={{ height: "100%", p: 2.5 }}>
-      <Typography variant="h6" sx={{ fontWeight: 800, mb: 2, whiteSpace: "nowrap" }}>
-        {sidebarCollapsed ? "JP" : "Google Dashboard"}
-      </Typography>
+      {/* Sidebar Header */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: sidebarCollapsed ? "center" : "space-between",
+          mb: 2,
+        }}
+      >
+        {!sidebarCollapsed && (
+          <Typography
+            variant="h6"
+            sx={{ fontWeight: 800, whiteSpace: "nowrap" }}
+          >
+            Google Dashboard
+          </Typography>
+        )}
+
+        <IconButton
+          onClick={() => setSidebarCollapsed((prev) => !prev)}
+          size="small"
+        >
+          {sidebarCollapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
+        </IconButton>
+      </Box>
+
       {!sidebarCollapsed && (
         <Typography variant="body2" sx={{ color: "text.secondary", mb: 3 }}>
           {effectiveRole === "admin" ? "Admin Workspace" : "User Workspace"}
@@ -94,6 +135,7 @@ export default function Layout({ children, role = "admin", title }) {
       <List sx={{ p: 0 }}>
         {navItems.map((item) => {
           const isActive = location.pathname === item.to;
+
           return (
             <ListItemButton
               key={item.to}
@@ -112,14 +154,27 @@ export default function Layout({ children, role = "admin", title }) {
                 },
               }}
             >
-              <ListItemText
-                primary={item.label}
+              {/* ICON */}
+              <ListItemIcon
                 sx={{
-                  m: 0,
-                  opacity: sidebarCollapsed ? 0 : 1,
-                  display: sidebarCollapsed ? "none" : "block",
+                  minWidth: 0,
+                  mr: sidebarCollapsed ? 0 : 2,
+                  justifyContent: "center",
+                  color: "inherit",
                 }}
-              />
+              >
+                {item.icon}
+              </ListItemIcon>
+
+              {/* TEXT */}
+              {!sidebarCollapsed && (
+                <ListItemText
+                  primary={item.label}
+                  sx={{
+                    opacity: sidebarCollapsed ? 0 : 1,
+                  }}
+                />
+              )}
             </ListItemButton>
           );
         })}
@@ -152,7 +207,9 @@ export default function Layout({ children, role = "admin", title }) {
             {title || "Google Dashboard"}
           </Typography>
 
-          <Box sx={{ ml: "auto", display: "flex", alignItems: "center", gap: 1.2 }}>
+          <Box
+            sx={{ ml: "auto", display: "flex", alignItems: "center", gap: 1.2 }}
+          >
             <Chip
               size="small"
               label={displayRole}
@@ -199,7 +256,10 @@ export default function Layout({ children, role = "admin", title }) {
         </Toolbar>
       </AppBar>
 
-      <Box component="nav" sx={{ width: { md: activeDrawerWidth }, flexShrink: { md: 0 } }}>
+      <Box
+        component="nav"
+        sx={{ width: { md: activeDrawerWidth }, flexShrink: { md: 0 } }}
+      >
         <Drawer
           variant="temporary"
           open={mobileOpen}
@@ -207,7 +267,10 @@ export default function Layout({ children, role = "admin", title }) {
           ModalProps={{ keepMounted: true }}
           sx={{
             display: { xs: "block", md: "none" },
-            "& .MuiDrawer-paper": { width: drawerWidth, boxSizing: "border-box" },
+            "& .MuiDrawer-paper": {
+              width: drawerWidth,
+              boxSizing: "border-box",
+            },
           }}
         >
           {drawer}
@@ -238,7 +301,10 @@ export default function Layout({ children, role = "admin", title }) {
         </Drawer>
       </Box>
 
-      <Box component="main" sx={{ flexGrow: 1, p: { xs: 2, sm: 3 }, mt: { xs: 8, sm: 9 } }}>
+      <Box
+        component="main"
+        sx={{ flexGrow: 1, p: { xs: 2, sm: 3 }, mt: { xs: 8, sm: 9 } }}
+      >
         {children}
       </Box>
     </Box>
