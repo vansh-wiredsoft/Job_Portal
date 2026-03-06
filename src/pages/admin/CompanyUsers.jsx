@@ -1,5 +1,10 @@
 import Layout from "../../layouts/commonLayout/Layout";
 import ExcelUploadGrid from "../../components/shared/ExcelUploadGrid";
+import {
+  clearUserUploadError,
+  resetUserUpload,
+  uploadUserFile,
+} from "../../store/userUploadSlice";
 
 export default function CompanyUsers() {
   return (
@@ -7,7 +12,10 @@ export default function CompanyUsers() {
       <ExcelUploadGrid
         title="Upload Company User Data"
         description="Upload employee or candidate data mapped to companies and validate in the table."
-        uploadPath="/config/api/v1/users/upload"
+        uploadSelector={(state) => state.userUpload}
+        uploadThunk={uploadUserFile}
+        resetUploadAction={resetUserUpload}
+        clearUploadErrorAction={clearUserUploadError}
       />
     </Layout>
   );

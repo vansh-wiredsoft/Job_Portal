@@ -1,5 +1,10 @@
 import Layout from "../../layouts/commonLayout/Layout";
 import ExcelUploadGrid from "../../components/shared/ExcelUploadGrid";
+import {
+  clearCompanyUploadError,
+  resetCompanyUpload,
+  uploadCompanyFile,
+} from "../../store/companyUploadSlice";
 
 export default function CompanyData() {
   return (
@@ -7,7 +12,10 @@ export default function CompanyData() {
       <ExcelUploadGrid
         title="Upload Company Data"
         description="Upload a company master file in Excel/CSV format and review records in the grid."
-        uploadPath="/config/api/v1/companies/upload"
+        uploadSelector={(state) => state.companyUpload}
+        uploadThunk={uploadCompanyFile}
+        resetUploadAction={resetCompanyUpload}
+        clearUploadErrorAction={clearCompanyUploadError}
       />
     </Layout>
   );

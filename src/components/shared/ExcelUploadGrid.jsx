@@ -1,9 +1,9 @@
 import { useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import * as XLSX from "xlsx";
 import { Alert, Box, Button, Paper, Stack, Typography } from "@mui/material";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import { DataGrid } from "@mui/x-data-grid";
-import api from "../../services/api";
 
 const getColumns = (rows) => {
   if (!rows.length) return [];
@@ -15,12 +15,18 @@ const getColumns = (rows) => {
   }));
 };
 
-export default function ExcelUploadGrid({ title, description, uploadPath }) {
+export default function ExcelUploadGrid({
+  title,
+  description,
+  uploadSelector,
+  uploadThunk,
+  resetUploadAction,
+  clearUploadErrorAction,
+}) {
+  const dispatch = useDispatch();
+  const { loading: uploading, status: uploadStatus, error: uploadError, responseData } =
+    useSelector(uploadSelector);
   const [rows, setRows] = useState([]);
-  const [uploadStatus, setUploadStatus] = useState(null);
-  const [uploadError, setUploadError] = useState("");
-  const [uploading, setUploading] = useState(false);
-  const [responseData, setResponseData] = useState(null);
 
   const columns = useMemo(() => getColumns(rows), [rows]);
 
@@ -28,9 +34,7 @@ export default function ExcelUploadGrid({ title, description, uploadPath }) {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    setUploadStatus(null);
-    setUploadError("");
-    setResponseData(null);
+    dispatch(resetUploadAction());
 
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -48,34 +52,10 @@ export default function ExcelUploadGrid({ title, description, uploadPath }) {
     };
     reader.readAsArrayBuffer(file);
 
-    if (!uploadPath) return;
-
     try {
-      setUploading(true);
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const response = await api.post(uploadPath, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-
-      const payload = response.data || {};
-      setUploadStatus(payload.success ? "success" : "error");
-      setResponseData(payload.data || null);
-      if (!payload.success) {
-        setUploadError(payload.message || "Upload failed.");
-      }
-    } catch (error) {
-      const message =
-        error?.response?.data?.message ||
-        error?.response?.data?.detail ||
-        "Upload failed due to server/network error.";
-      setUploadStatus("error");
-      setUploadError(message);
-    } finally {
-      setUploading(false);
+      await dispatch(uploadThunk(file)).unwrap();
+    } catch {
+      // Error state is handled in redux slice.
     }
   };
 
@@ -105,7 +85,17 @@ export default function ExcelUploadGrid({ title, description, uploadPath }) {
         disabled={uploading}
       >
         {uploading ? "Uploading..." : "Upload Excel"}
-        <input hidden type="file" accept=".xlsx,.xls,.csv" onChange={handleUpload} />
+        <input
+          hidden
+          type="file"
+          accept=".xlsx,.xls,.csv"
+          onChange={handleUpload}
+          onClick={() => {
+            if (uploadError && clearUploadErrorAction) {
+              dispatch(clearUploadErrorAction());
+            }
+          }}
+        />
       </Button>
 
       {uploadStatus === "success" && (
