@@ -44,3 +44,17 @@ export const getUserProfile = () => {
     return null;
   }
 };
+
+export const updateStoredProfile = ({ name, email }) => {
+  const profile = getUserProfile();
+  if (!profile) return;
+
+  localStorage.setItem(
+    USER_KEY,
+    JSON.stringify({
+      ...profile,
+      name,
+      email,
+    }),
+  );
+};

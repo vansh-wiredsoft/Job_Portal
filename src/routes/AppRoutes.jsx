@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from "react-router-dom";
+import { useSelector } from "react-redux";
 
 import AdminDashboard from "../pages/admin/Dashboard";
 import CompanyData from "../pages/admin/CompanyData";
@@ -8,11 +9,10 @@ import Sessions from "../pages/admin/Sessions";
 import Login from "../pages/auth/Login";
 import Profile from "../pages/common/Profile";
 import UserDashboard from "../pages/user/Dashboard";
-import { getRole, isAuthenticated } from "../utils/roleHelper";
 
 function ProtectedRoute({ children, allowedRole }) {
-  const role = getRole();
-  const authenticated = isAuthenticated();
+  const role = useSelector((state) => state.auth.role);
+  const authenticated = useSelector((state) => state.auth.isAuthenticated);
 
   if (!authenticated) {
     return <Navigate to="/login" replace />;
@@ -27,8 +27,8 @@ function ProtectedRoute({ children, allowedRole }) {
 }
 
 export default function AppRoutes() {
-  const role = getRole();
-  const authenticated = isAuthenticated();
+  const role = useSelector((state) => state.auth.role);
+  const authenticated = useSelector((state) => state.auth.isAuthenticated);
   const fallback = role === "user" ? "/user/dashboard" : "/admin/dashboard";
 
   return (

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import {
   Alert,
   Box,
@@ -10,58 +11,51 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import api from "../../services/api";
-import { setAuthSession } from "../../utils/roleHelper";
+import { clearAuthError, loginUser, setAuthError } from "../../store/authSlice";
 
 export default function Login() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [username, setUsername] = useState("subia");
   const [password, setPassword] = useState("password");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const { loading, error } = useSelector((state) => state.auth);
 
   const handleLogin = async (event) => {
     event.preventDefault();
-    setError("");
+    dispatch(clearAuthError());
 
     if (!username.trim() || !password.trim()) {
-      setError("Please enter both username and password.");
+      dispatch(setAuthError("Please enter both username and password."));
       return;
     }
 
-    setLoading(true);
     try {
-      const response = await api.post("/authentication/api/v1/auth/login", {
-        username: username.trim(),
-        password,
-      });
+      const result = await dispatch(
+        loginUser({
+          username: username.trim(),
+          password,
+        }),
+      ).unwrap();
 
-      const { access_token: accessToken, user } = response.data || {};
-      if (!accessToken || !user) {
-        setError("Login response is invalid.");
-        return;
-      }
-
-      const normalizedRole = String(user.role || "").toLowerCase();
-      setAuthSession({
-        token: accessToken,
-        role: normalizedRole,
-        name: user.username,
-        email: user.email,
-        id: user.id,
-      });
-
-      const target = normalizedRole === "admin" ? "/admin/dashboard" : "/user/dashboard";
+      const target = result.role === "admin" ? "/admin/dashboard" : "/user/dashboard";
       navigate(target, { replace: true });
-    } catch (requestError) {
-      const message =
-        requestError?.response?.data?.message ||
-        requestError?.response?.data?.detail ||
-        "Invalid credentials or server unavailable.";
-      setError(message);
-    } finally {
-      setLoading(false);
+    } catch {
+      // Error state is already handled by auth slice.
     }
+  };
+
+  const handleUsernameChange = (event) => {
+    if (error) {
+      dispatch(clearAuthError());
+    }
+    setUsername(event.target.value);
+  };
+
+  const handlePasswordChange = (event) => {
+    if (error) {
+      dispatch(clearAuthError());
+    }
+    setPassword(event.target.value);
   };
 
   return (
@@ -99,7 +93,7 @@ export default function Login() {
             fullWidth
             label="Username"
             value={username}
-            onChange={(event) => setUsername(event.target.value)}
+            onChange={handleUsernameChange}
           />
 
           <TextField
@@ -107,7 +101,7 @@ export default function Login() {
             label="Password"
             type="password"
             value={password}
-            onChange={(event) => setPassword(event.target.value)}
+            onChange={handlePasswordChange}
           />
 
           <Button type="submit" variant="contained" size="large" disabled={loading}>

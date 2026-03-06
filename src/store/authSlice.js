@@ -1,0 +1,123 @@
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import api from "../services/api";
+import {
+  clearAuthSession,
+  getRole,
+  getToken,
+  getUserProfile,
+  isAuthenticated,
+  setAuthSession,
+  updateStoredProfile,
+} from "../utils/roleHelper";
+
+const initialState = {
+  isAuthenticated: isAuthenticated(),
+  role: getRole(),
+  token: getToken(),
+  user: getUserProfile(),
+  loading: false,
+  error: null,
+};
+
+export const loginUser = createAsyncThunk(
+  "auth/loginUser",
+  async ({ username, password }, { rejectWithValue }) => {
+    try {
+      const response = await api.post("/authentication/api/v1/auth/login", {
+        username,
+        password,
+      });
+
+      const { access_token: accessToken, user } = response.data || {};
+      if (!accessToken || !user) {
+        return rejectWithValue("Login response is invalid.");
+      }
+
+      const normalizedRole = String(user.role || "").toLowerCase();
+      const payload = {
+        token: accessToken,
+        role: normalizedRole,
+        user: {
+          id: user.id,
+          name: user.username,
+          email: user.email,
+          role: normalizedRole,
+        },
+      };
+
+      setAuthSession({
+        token: payload.token,
+        role: payload.role,
+        name: payload.user.name,
+        email: payload.user.email,
+        id: payload.user.id,
+      });
+
+      return payload;
+    } catch (requestError) {
+      const message =
+        requestError?.response?.data?.message ||
+        requestError?.response?.data?.detail ||
+        "Invalid credentials or server unavailable.";
+      return rejectWithValue(message);
+    }
+  },
+);
+
+const authSlice = createSlice({
+  name: "auth",
+  initialState,
+  reducers: {
+    logout(state) {
+      clearAuthSession();
+      state.isAuthenticated = false;
+      state.role = null;
+      state.token = null;
+      state.user = null;
+      state.loading = false;
+      state.error = null;
+    },
+    clearAuthError(state) {
+      state.error = null;
+    },
+    setAuthError(state, action) {
+      state.error = action.payload;
+    },
+    updateProfile(state, action) {
+      const { name, email } = action.payload;
+      if (!state.user) return;
+
+      state.user = {
+        ...state.user,
+        name,
+        email,
+      };
+      updateStoredProfile({
+        name,
+        email,
+      });
+    },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(loginUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(loginUser.fulfilled, (state, action) => {
+        state.loading = false;
+        state.error = null;
+        state.isAuthenticated = true;
+        state.role = action.payload.role;
+        state.token = action.payload.token;
+        state.user = action.payload.user;
+      })
+      .addCase(loginUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Login failed.";
+      });
+  },
+});
+
+export const { logout, clearAuthError, setAuthError, updateProfile } = authSlice.actions;
+export default authSlice.reducer;

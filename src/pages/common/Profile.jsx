@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import {
   Alert,
   Avatar,
@@ -11,23 +12,23 @@ import {
   Typography,
 } from "@mui/material";
 import Layout from "../../layouts/commonLayout/Layout";
-import { getUserProfile } from "../../utils/roleHelper";
+import { updateProfile } from "../../store/authSlice";
 
 export default function Profile() {
-  const profile = getUserProfile();
+  const dispatch = useDispatch();
+  const profile = useSelector((state) => state.auth.user);
   const role = profile?.role || "admin";
   const [name, setName] = useState(profile?.name || "Portal User");
   const [email, setEmail] = useState(profile?.email || "user@example.com");
   const [message, setMessage] = useState("");
 
   const handleSave = () => {
-    const updated = {
-      ...(profile || {}),
-      name: name.trim(),
-      email: email.trim(),
-      role,
-    };
-    localStorage.setItem("userProfile", JSON.stringify(updated));
+    dispatch(
+      updateProfile({
+        name: name.trim(),
+        email: email.trim(),
+      }),
+    );
     setMessage("Profile updated successfully.");
   };
 
@@ -104,12 +105,12 @@ export default function Profile() {
               <Typography sx={{ textTransform: "capitalize", fontWeight: 700 }}>
                 {role}
               </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              {/* <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                 Auth Token
               </Typography>
               <Typography variant="body2" sx={{ wordBreak: "break-all" }}>
                 {profile?.token || "No token"}
-              </Typography>
+              </Typography> */}
             </Stack>
           </Paper>
         </Grid>

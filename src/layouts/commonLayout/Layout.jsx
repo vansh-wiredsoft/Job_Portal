@@ -20,7 +20,8 @@ import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import LogoutIcon from "@mui/icons-material/Logout";
 import MenuIcon from "@mui/icons-material/Menu";
 import { useNavigate } from "react-router-dom";
-import { clearAuthSession, getUserProfile } from "../../utils/roleHelper";
+import { useDispatch, useSelector } from "react-redux";
+import { logout } from "../../store/authSlice";
 
 const drawerWidth = 260;
 const collapsedDrawerWidth = 88;
@@ -36,20 +37,24 @@ const adminItems = [
 const userItems = [{ label: "Dashboard", to: "/user/dashboard" }];
 
 export default function Layout({ children, role = "admin", title }) {
+  const dispatch = useDispatch();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [menuAnchor, setMenuAnchor] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
-  const profile = getUserProfile();
+  const user = useSelector((state) => state.auth.user);
+  const stateRole = useSelector((state) => state.auth.role);
+  const profile = user || null;
+  const effectiveRole = role || stateRole || "admin";
 
   const navItems =
-    role === "user"
+    effectiveRole === "user"
       ? [...userItems, { label: "My Profile", to: "/profile" }]
       : [...adminItems, { label: "My Profile", to: "/profile" }];
 
   const displayName = profile?.name || "Portal User";
-  const displayRole = (profile?.role || role).toUpperCase();
+  const displayRole = (profile?.role || effectiveRole).toUpperCase();
 
   const handleMenuOpen = (event) => setMenuAnchor(event.currentTarget);
   const handleMenuClose = () => setMenuAnchor(null);
@@ -60,7 +65,7 @@ export default function Layout({ children, role = "admin", title }) {
   };
 
   const handleLogout = () => {
-    clearAuthSession();
+    dispatch(logout());
     handleMenuClose();
     navigate("/login", { replace: true });
   };
@@ -82,7 +87,7 @@ export default function Layout({ children, role = "admin", title }) {
       </Typography>
       {!sidebarCollapsed && (
         <Typography variant="body2" sx={{ color: "text.secondary", mb: 3 }}>
-          {role === "admin" ? "Admin Workspace" : "User Workspace"}
+          {effectiveRole === "admin" ? "Admin Workspace" : "User Workspace"}
         </Typography>
       )}
 
