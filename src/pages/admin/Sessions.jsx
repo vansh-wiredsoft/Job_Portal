@@ -1,26 +1,37 @@
 import { useEffect, useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import {
   Alert,
   Box,
   Button,
   Checkbox,
+  CircularProgress,
   FormControl,
   FormControlLabel,
   Grid,
   MenuItem,
   Paper,
   Select,
-  CircularProgress,
   Stack,
   TextField,
   Typography,
 } from "@mui/material";
 import Layout from "../../layouts/commonLayout/Layout";
 import api from "../../services/api";
+import {
+  addQuestionsToSession,
+  clearSessionError,
+  clearSessionMessages,
+  createSession,
+  resetSessionFlow,
+} from "../../store/sessionSlice";
 
-const COMPANY_PATH = "/config/api/v1/companies";
 const QUESTION_PATH = "/config/api/v1/kpiquestions";
-const SESSION_PATH = "/config/api/v1/sessions";
+
+const companies = [
+  { id: "6e74b157-fbeb-43ab-9ee8-1eb54ae92976", name: "Ally Wired Soft Solutions" },
+  { id: "6e74b157-fbeb-43ab-9ee8-1eb54ae92977", name: "Bharti Airtel Limited" },
+];
 
 const pickArray = (payload) => {
   if (Array.isArray(payload)) return payload;
@@ -30,11 +41,6 @@ const pickArray = (payload) => {
   return [];
 };
 
-const normalizeCompany = (item, index) => ({
-  id: String(item?.id || item?.company_id || index),
-  name: item?.name || item?.company_name || item?.title || "Unnamed Company",
-});
-
 const normalizeQuestion = (item, index) => ({
   id: String(item?.id || item?.question_id || index),
   text: item?.question_text || item?.text || item?.name || "Untitled Question",
@@ -42,19 +48,24 @@ const normalizeQuestion = (item, index) => ({
 });
 
 export default function Sessions() {
+  const dispatch = useDispatch();
+  const {
+    createdSession,
+    addedQuestions,
+    createLoading,
+    addLoading,
+    createMessage,
+    addMessage,
+    error: sessionError,
+  } = useSelector((state) => state.session);
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [companyId, setCompanyId] = useState("");
   const [selectedQuestions, setSelectedQuestions] = useState([]);
-  const [companies, setCompanies] = useState([]);
   const [questions, setQuestions] = useState([]);
-  const [loadingMeta, setLoadingMeta] = useState(false);
-  const [creatingSession, setCreatingSession] = useState(false);
-  const [addingQuestions, setAddingQuestions] = useState(false);
-  const [sessionCreated, setSessionCreated] = useState(null);
-  const [addedQuestionsSummary, setAddedQuestionsSummary] = useState([]);
+  const [loadingQuestions, setLoadingQuestions] = useState(false);
   const [formError, setFormError] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
 
   const selectedCompanyName = useMemo(
     () => companies.find((company) => company.id === companyId)?.name || "",
@@ -62,29 +73,31 @@ export default function Sessions() {
   );
 
   useEffect(() => {
-    const loadMeta = async () => {
+    const loadQuestions = async () => {
       try {
-        setLoadingMeta(true);
-        const [companiesRes, questionsRes] = await Promise.all([
-          api.get(COMPANY_PATH),
-          api.get(QUESTION_PATH),
-        ]);
-
-        setCompanies(pickArray(companiesRes?.data).map(normalizeCompany));
-        setQuestions(pickArray(questionsRes?.data).map(normalizeQuestion));
-      } catch (error) {
-        const message =
-          error?.response?.data?.message ||
-          error?.response?.data?.detail ||
-          "Failed to load companies/questions.";
-        setFormError(message);
+        setLoadingQuestions(true);
+        const response = await api.get(QUESTION_PATH);
+        setQuestions(pickArray(response?.data).map(normalizeQuestion));
+      } catch {
+        setFormError("Failed to load questions.");
       } finally {
-        setLoadingMeta(false);
+        setLoadingQuestions(false);
       }
     };
 
-    loadMeta();
+    loadQuestions();
   }, []);
+
+  useEffect(() => {
+    return () => {
+      dispatch(resetSessionFlow());
+    };
+  }, [dispatch]);
+
+  const clearLocalAndReduxErrors = () => {
+    if (formError) setFormError("");
+    if (sessionError) dispatch(clearSessionError());
+  };
 
   const toggleQuestion = (questionId) => {
     setSelectedQuestions((current) =>
@@ -94,45 +107,33 @@ export default function Sessions() {
     );
   };
 
-  const createSession = async () => {
+  const handleCreateSession = async () => {
+    clearLocalAndReduxErrors();
+    dispatch(clearSessionMessages());
+
     if (!title.trim() || !description.trim() || !companyId) {
       setFormError("Title, description and company are required.");
       return;
     }
 
     try {
-      setCreatingSession(true);
-      setFormError("");
-      setSuccessMessage("");
-      setAddedQuestionsSummary([]);
-
-      const response = await api.post(SESSION_PATH, {
-        title: title.trim(),
-        description: description.trim(),
-        company_id: companyId,
-      });
-
-      const payload = response?.data || {};
-      if (!payload?.success || !payload?.data?.id) {
-        setFormError(payload?.message || "Session creation failed.");
-        return;
-      }
-
-      setSessionCreated(payload.data);
-      setSuccessMessage(payload.message || "Session created successfully.");
-    } catch (error) {
-      const message =
-        error?.response?.data?.message ||
-        error?.response?.data?.detail ||
-        "Session creation failed due to server/network error.";
-      setFormError(message);
-    } finally {
-      setCreatingSession(false);
+      await dispatch(
+        createSession({
+          title: title.trim(),
+          description: description.trim(),
+          companyId,
+        }),
+      ).unwrap();
+    } catch {
+      // Error is already captured in redux state.
     }
   };
 
-  const addQuestionsToSession = async () => {
-    if (!sessionCreated?.id) {
+  const handleAddQuestions = async () => {
+    clearLocalAndReduxErrors();
+    dispatch(clearSessionMessages());
+
+    if (!createdSession?.id) {
       setFormError("Create the session first.");
       return;
     }
@@ -142,43 +143,24 @@ export default function Sessions() {
     }
 
     try {
-      setAddingQuestions(true);
-      setFormError("");
-      setSuccessMessage("");
-
-      const response = await api.post(
-        `${SESSION_PATH}/${sessionCreated.id}/questions`,
-        { question_ids: selectedQuestions },
-      );
-
-      const payload = response?.data || {};
-      if (!payload?.success) {
-        setFormError(payload?.message || "Failed to add questions.");
-        return;
-      }
-
-      setAddedQuestionsSummary(Array.isArray(payload?.data) ? payload.data : []);
-      setSuccessMessage(payload?.message || "Questions added successfully.");
-    } catch (error) {
-      const message =
-        error?.response?.data?.message ||
-        error?.response?.data?.detail ||
-        "Failed to add questions due to server/network error.";
-      setFormError(message);
-    } finally {
-      setAddingQuestions(false);
+      await dispatch(
+        addQuestionsToSession({
+          sessionId: createdSession.id,
+          questionIds: selectedQuestions,
+        }),
+      ).unwrap();
+    } catch {
+      // Error is already captured in redux state.
     }
   };
 
-  const resetForm = () => {
+  const handleReset = () => {
     setTitle("");
     setDescription("");
     setCompanyId("");
     setSelectedQuestions([]);
-    setSessionCreated(null);
-    setAddedQuestionsSummary([]);
     setFormError("");
-    setSuccessMessage("");
+    dispatch(resetSessionFlow());
   };
 
   return (
@@ -205,32 +187,43 @@ export default function Sessions() {
 
             <Stack spacing={2}>
               {!!formError && <Alert severity="error">{formError}</Alert>}
-              {!!successMessage && <Alert severity="success">{successMessage}</Alert>}
+              {!!sessionError && <Alert severity="error">{sessionError}</Alert>}
+              {!!createMessage && <Alert severity="success">{createMessage}</Alert>}
+              {!!addMessage && <Alert severity="success">{addMessage}</Alert>}
 
               <TextField
                 label="Session Title"
                 value={title}
-                onChange={(event) => setTitle(event.target.value)}
+                onChange={(event) => {
+                  clearLocalAndReduxErrors();
+                  setTitle(event.target.value);
+                }}
                 fullWidth
-                disabled={!!sessionCreated}
+                disabled={!!createdSession}
               />
 
               <TextField
                 label="Description"
                 value={description}
-                onChange={(event) => setDescription(event.target.value)}
+                onChange={(event) => {
+                  clearLocalAndReduxErrors();
+                  setDescription(event.target.value);
+                }}
                 fullWidth
                 multiline
                 minRows={3}
-                disabled={!!sessionCreated}
+                disabled={!!createdSession}
               />
 
               <FormControl fullWidth>
                 <Select
                   displayEmpty
                   value={companyId}
-                  onChange={(event) => setCompanyId(event.target.value)}
-                  disabled={!!sessionCreated || loadingMeta}
+                  onChange={(event) => {
+                    clearLocalAndReduxErrors();
+                    setCompanyId(event.target.value);
+                  }}
+                  disabled={!!createdSession}
                 >
                   <MenuItem value="">Select Company</MenuItem>
                   {companies.map((company) => (
@@ -241,22 +234,18 @@ export default function Sessions() {
                 </Select>
               </FormControl>
 
-              {!sessionCreated && (
-                <Button
-                  variant="contained"
-                  onClick={createSession}
-                  disabled={creatingSession || loadingMeta}
-                >
-                  {creatingSession ? "Creating Session..." : "Create Session"}
+              {!createdSession && (
+                <Button variant="contained" onClick={handleCreateSession} disabled={createLoading}>
+                  {createLoading ? "Creating Session..." : "Create Session"}
                 </Button>
               )}
 
-              {!!sessionCreated && (
+              {!!createdSession && (
                 <Box>
                   <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
                     Add Questions
                   </Typography>
-                  {loadingMeta ? (
+                  {loadingQuestions ? (
                     <Stack direction="row" spacing={1} alignItems="center">
                       <CircularProgress size={16} />
                       <Typography variant="body2" color="text.secondary">
@@ -264,10 +253,7 @@ export default function Sessions() {
                       </Typography>
                     </Stack>
                   ) : (
-                    <Stack
-                      spacing={0.6}
-                      sx={{ maxHeight: 240, overflowY: "auto", pr: 1 }}
-                    >
+                    <Stack spacing={0.6} sx={{ maxHeight: 240, overflowY: "auto", pr: 1 }}>
                       {questions.map((question) => (
                         <FormControlLabel
                           key={question.id}
@@ -278,9 +264,7 @@ export default function Sessions() {
                             />
                           }
                           label={
-                            question.code
-                              ? `${question.text} (${question.code})`
-                              : question.text
+                            question.code ? `${question.text} (${question.code})` : question.text
                           }
                         />
                       ))}
@@ -290,17 +274,17 @@ export default function Sessions() {
               )}
 
               <Stack direction="row" spacing={1.2}>
-                {!!sessionCreated && (
+                {!!createdSession && (
                   <Button
                     variant="contained"
-                    onClick={addQuestionsToSession}
-                    disabled={addingQuestions || !selectedQuestions.length}
+                    onClick={handleAddQuestions}
+                    disabled={addLoading || !selectedQuestions.length}
                   >
-                    {addingQuestions ? "Adding Questions..." : "Add Questions"}
+                    {addLoading ? "Adding Questions..." : "Add Questions"}
                   </Button>
                 )}
-                <Button variant="outlined" onClick={resetForm}>
-                  {sessionCreated ? "Create New Session" : "Reset"}
+                <Button variant="outlined" onClick={handleReset}>
+                  {createdSession ? "Create New Session" : "Reset"}
                 </Button>
               </Stack>
             </Stack>
@@ -348,7 +332,7 @@ export default function Sessions() {
                 <Typography variant="body2" color="text.secondary">
                   Session ID
                 </Typography>
-                <Typography>{sessionCreated?.id || "-"}</Typography>
+                <Typography>{createdSession?.id || "-"}</Typography>
               </Box>
 
               <Box>
@@ -362,17 +346,17 @@ export default function Sessions() {
                 <Typography variant="body2" color="text.secondary">
                   Questions Added
                 </Typography>
-                <Typography>{addedQuestionsSummary.length}</Typography>
+                <Typography>{addedQuestions.length}</Typography>
               </Box>
             </Stack>
 
-            {!!addedQuestionsSummary.length && (
+            {!!addedQuestions.length && (
               <Paper variant="outlined" sx={{ mt: 2, p: 1.5, borderRadius: 2 }}>
                 <Typography variant="subtitle2" sx={{ mb: 0.8 }}>
                   Added Questions Summary
                 </Typography>
                 <Stack spacing={0.8}>
-                  {addedQuestionsSummary.map((item) => (
+                  {addedQuestions.map((item) => (
                     <Typography key={item.question_id} variant="body2">
                       {item.display_order}. {item.question_text} ({item.question_code})
                     </Typography>
