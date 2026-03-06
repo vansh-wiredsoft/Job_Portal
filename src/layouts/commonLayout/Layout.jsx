@@ -118,12 +118,12 @@ export default function Layout({ children, role = "admin", title }) {
           </Typography>
         )}
 
-        <IconButton
+        {/* <IconButton
           onClick={() => setSidebarCollapsed((prev) => !prev)}
           size="small"
         >
           {sidebarCollapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
-        </IconButton>
+        </IconButton> */}
       </Box>
 
       {!sidebarCollapsed && (
