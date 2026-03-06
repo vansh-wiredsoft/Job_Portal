@@ -188,10 +188,17 @@ export default function Layout({ children, role = "admin", title }) {
         color="transparent"
         elevation={0}
         sx={{
+          width: { md: `calc(100% - ${activeDrawerWidth}px)` },
+          ml: { md: `${activeDrawerWidth}px` },
           borderBottom: "1px solid",
           borderColor: "divider",
           backdropFilter: "blur(8px)",
           bgcolor: "rgba(251, 248, 242, 0.8)",
+          transition: (theme) =>
+            theme.transitions.create(["width", "margin-left"], {
+              easing: theme.transitions.easing.sharp,
+              duration: theme.transitions.duration.shorter,
+            }),
         }}
       >
         <Toolbar sx={{ minHeight: { xs: 64, sm: 72 } }}>

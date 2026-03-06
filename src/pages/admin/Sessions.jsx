@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
+  Alert,
   Box,
   Button,
   Checkbox,
@@ -9,36 +10,81 @@ import {
   MenuItem,
   Paper,
   Select,
+  CircularProgress,
   Stack,
   TextField,
   Typography,
 } from "@mui/material";
 import Layout from "../../layouts/commonLayout/Layout";
+import api from "../../services/api";
 
-const companies = [
-  { id: 1, name: "Skyline Tech" },
-  { id: 2, name: "Aster Solutions" },
-  { id: 3, name: "Nimbus Labs" },
-];
+const COMPANY_PATH = "/config/api/v1/companies";
+const QUESTION_PATH = "/config/api/v1/kpiquestions";
+const SESSION_PATH = "/config/api/v1/sessions";
 
-const questions = [
-  { id: 1, text: "What is normalization in DBMS?" },
-  { id: 2, text: "Explain async/await in JavaScript." },
-  { id: 3, text: "What is REST and why is it stateless?" },
-  { id: 4, text: "Differentiate stack and queue." },
-  { id: 5, text: "How does indexing improve query performance?" },
-];
+const pickArray = (payload) => {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.items)) return payload.items;
+  if (Array.isArray(payload?.results)) return payload.results;
+  return [];
+};
+
+const normalizeCompany = (item, index) => ({
+  id: String(item?.id || item?.company_id || index),
+  name: item?.name || item?.company_name || item?.title || "Unnamed Company",
+});
+
+const normalizeQuestion = (item, index) => ({
+  id: String(item?.id || item?.question_id || index),
+  text: item?.question_text || item?.text || item?.name || "Untitled Question",
+  code: item?.question_code || "",
+});
 
 export default function Sessions() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [companyId, setCompanyId] = useState("");
   const [selectedQuestions, setSelectedQuestions] = useState([]);
+  const [companies, setCompanies] = useState([]);
+  const [questions, setQuestions] = useState([]);
+  const [loadingMeta, setLoadingMeta] = useState(false);
+  const [creatingSession, setCreatingSession] = useState(false);
+  const [addingQuestions, setAddingQuestions] = useState(false);
+  const [sessionCreated, setSessionCreated] = useState(null);
+  const [addedQuestionsSummary, setAddedQuestionsSummary] = useState([]);
+  const [formError, setFormError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   const selectedCompanyName = useMemo(
     () => companies.find((company) => company.id === companyId)?.name || "",
     [companyId],
   );
+
+  useEffect(() => {
+    const loadMeta = async () => {
+      try {
+        setLoadingMeta(true);
+        const [companiesRes, questionsRes] = await Promise.all([
+          api.get(COMPANY_PATH),
+          api.get(QUESTION_PATH),
+        ]);
+
+        setCompanies(pickArray(companiesRes?.data).map(normalizeCompany));
+        setQuestions(pickArray(questionsRes?.data).map(normalizeQuestion));
+      } catch (error) {
+        const message =
+          error?.response?.data?.message ||
+          error?.response?.data?.detail ||
+          "Failed to load companies/questions.";
+        setFormError(message);
+      } finally {
+        setLoadingMeta(false);
+      }
+    };
+
+    loadMeta();
+  }, []);
 
   const toggleQuestion = (questionId) => {
     setSelectedQuestions((current) =>
@@ -48,11 +94,91 @@ export default function Sessions() {
     );
   };
 
+  const createSession = async () => {
+    if (!title.trim() || !description.trim() || !companyId) {
+      setFormError("Title, description and company are required.");
+      return;
+    }
+
+    try {
+      setCreatingSession(true);
+      setFormError("");
+      setSuccessMessage("");
+      setAddedQuestionsSummary([]);
+
+      const response = await api.post(SESSION_PATH, {
+        title: title.trim(),
+        description: description.trim(),
+        company_id: companyId,
+      });
+
+      const payload = response?.data || {};
+      if (!payload?.success || !payload?.data?.id) {
+        setFormError(payload?.message || "Session creation failed.");
+        return;
+      }
+
+      setSessionCreated(payload.data);
+      setSuccessMessage(payload.message || "Session created successfully.");
+    } catch (error) {
+      const message =
+        error?.response?.data?.message ||
+        error?.response?.data?.detail ||
+        "Session creation failed due to server/network error.";
+      setFormError(message);
+    } finally {
+      setCreatingSession(false);
+    }
+  };
+
+  const addQuestionsToSession = async () => {
+    if (!sessionCreated?.id) {
+      setFormError("Create the session first.");
+      return;
+    }
+    if (!selectedQuestions.length) {
+      setFormError("Select at least one question.");
+      return;
+    }
+
+    try {
+      setAddingQuestions(true);
+      setFormError("");
+      setSuccessMessage("");
+
+      const response = await api.post(
+        `${SESSION_PATH}/${sessionCreated.id}/questions`,
+        { question_ids: selectedQuestions },
+      );
+
+      const payload = response?.data || {};
+      if (!payload?.success) {
+        setFormError(payload?.message || "Failed to add questions.");
+        return;
+      }
+
+      setAddedQuestionsSummary(Array.isArray(payload?.data) ? payload.data : []);
+      setSuccessMessage(payload?.message || "Questions added successfully.");
+    } catch (error) {
+      const message =
+        error?.response?.data?.message ||
+        error?.response?.data?.detail ||
+        "Failed to add questions due to server/network error.";
+      setFormError(message);
+    } finally {
+      setAddingQuestions(false);
+    }
+  };
+
   const resetForm = () => {
     setTitle("");
     setDescription("");
     setCompanyId("");
     setSelectedQuestions([]);
+    setSessionCreated(null);
+    setAddedQuestionsSummary([]);
+    setFormError("");
+    setSuccessMessage("");
   };
 
   return (
@@ -73,16 +199,20 @@ export default function Sessions() {
               Session Details
             </Typography>
             <Typography color="text.secondary" sx={{ mb: 2.5 }}>
-              Set title, description, company, and add questions to prepare an assessment
+              Create session first, then select questions and add them to the created
               session.
             </Typography>
 
             <Stack spacing={2}>
+              {!!formError && <Alert severity="error">{formError}</Alert>}
+              {!!successMessage && <Alert severity="success">{successMessage}</Alert>}
+
               <TextField
                 label="Session Title"
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
                 fullWidth
+                disabled={!!sessionCreated}
               />
 
               <TextField
@@ -92,6 +222,7 @@ export default function Sessions() {
                 fullWidth
                 multiline
                 minRows={3}
+                disabled={!!sessionCreated}
               />
 
               <FormControl fullWidth>
@@ -99,6 +230,7 @@ export default function Sessions() {
                   displayEmpty
                   value={companyId}
                   onChange={(event) => setCompanyId(event.target.value)}
+                  disabled={!!sessionCreated || loadingMeta}
                 >
                   <MenuItem value="">Select Company</MenuItem>
                   {companies.map((company) => (
@@ -109,33 +241,66 @@ export default function Sessions() {
                 </Select>
               </FormControl>
 
-              <Box>
-                <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
-                  Add Questions
-                </Typography>
-                <Stack
-                  spacing={0.6}
-                  sx={{ maxHeight: 240, overflowY: "auto", pr: 1 }}
+              {!sessionCreated && (
+                <Button
+                  variant="contained"
+                  onClick={createSession}
+                  disabled={creatingSession || loadingMeta}
                 >
-                  {questions.map((question) => (
-                    <FormControlLabel
-                      key={question.id}
-                      control={
-                        <Checkbox
-                          checked={selectedQuestions.includes(question.id)}
-                          onChange={() => toggleQuestion(question.id)}
+                  {creatingSession ? "Creating Session..." : "Create Session"}
+                </Button>
+              )}
+
+              {!!sessionCreated && (
+                <Box>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
+                    Add Questions
+                  </Typography>
+                  {loadingMeta ? (
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <CircularProgress size={16} />
+                      <Typography variant="body2" color="text.secondary">
+                        Loading question list...
+                      </Typography>
+                    </Stack>
+                  ) : (
+                    <Stack
+                      spacing={0.6}
+                      sx={{ maxHeight: 240, overflowY: "auto", pr: 1 }}
+                    >
+                      {questions.map((question) => (
+                        <FormControlLabel
+                          key={question.id}
+                          control={
+                            <Checkbox
+                              checked={selectedQuestions.includes(question.id)}
+                              onChange={() => toggleQuestion(question.id)}
+                            />
+                          }
+                          label={
+                            question.code
+                              ? `${question.text} (${question.code})`
+                              : question.text
+                          }
                         />
-                      }
-                      label={question.text}
-                    />
-                  ))}
-                </Stack>
-              </Box>
+                      ))}
+                    </Stack>
+                  )}
+                </Box>
+              )}
 
               <Stack direction="row" spacing={1.2}>
-                <Button variant="contained">Create Session</Button>
+                {!!sessionCreated && (
+                  <Button
+                    variant="contained"
+                    onClick={addQuestionsToSession}
+                    disabled={addingQuestions || !selectedQuestions.length}
+                  >
+                    {addingQuestions ? "Adding Questions..." : "Add Questions"}
+                  </Button>
+                )}
                 <Button variant="outlined" onClick={resetForm}>
-                  Reset
+                  {sessionCreated ? "Create New Session" : "Reset"}
                 </Button>
               </Stack>
             </Stack>
@@ -181,11 +346,40 @@ export default function Sessions() {
 
               <Box>
                 <Typography variant="body2" color="text.secondary">
+                  Session ID
+                </Typography>
+                <Typography>{sessionCreated?.id || "-"}</Typography>
+              </Box>
+
+              <Box>
+                <Typography variant="body2" color="text.secondary">
                   Selected Questions
                 </Typography>
                 <Typography>{selectedQuestions.length}</Typography>
               </Box>
+
+              <Box>
+                <Typography variant="body2" color="text.secondary">
+                  Questions Added
+                </Typography>
+                <Typography>{addedQuestionsSummary.length}</Typography>
+              </Box>
             </Stack>
+
+            {!!addedQuestionsSummary.length && (
+              <Paper variant="outlined" sx={{ mt: 2, p: 1.5, borderRadius: 2 }}>
+                <Typography variant="subtitle2" sx={{ mb: 0.8 }}>
+                  Added Questions Summary
+                </Typography>
+                <Stack spacing={0.8}>
+                  {addedQuestionsSummary.map((item) => (
+                    <Typography key={item.question_id} variant="body2">
+                      {item.display_order}. {item.question_text} ({item.question_code})
+                    </Typography>
+                  ))}
+                </Stack>
+              </Paper>
+            )}
           </Paper>
         </Grid>
       </Grid>
