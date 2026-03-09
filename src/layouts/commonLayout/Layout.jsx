@@ -47,7 +47,7 @@ const userItems = [
   { label: "Dashboard", to: "/user/dashboard", icon: <DashboardIcon /> },
 ];
 
-export default function Layout({ children, role = "admin", title }) {
+export default function Layout({ children, role, title }) {
   const dispatch = useDispatch();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
@@ -60,7 +60,7 @@ export default function Layout({ children, role = "admin", title }) {
   const user = useSelector((state) => state.auth.user);
   const stateRole = useSelector((state) => state.auth.role);
   const profile = user || null;
-  const effectiveRole = role || stateRole || "admin";
+  const effectiveRole = stateRole || role || "admin";
 
   const navItems =
     effectiveRole === "user"
