@@ -1,6 +1,5 @@
 import Layout from "../../layouts/commonLayout/Layout";
-import EntityFormPage from "../../components/shared/EntityFormPage";
-import { entityConfigs } from "../../data/adminEntityConfigs";
+import QuestionWorkflowForm from "./QuestionWorkflowForm";
 
 export default function QuestionsForm({ mode }) {
   return (
@@ -8,7 +7,7 @@ export default function QuestionsForm({ mode }) {
       role="admin"
       title={mode === "edit" ? "Edit Question" : "Add Question"}
     >
-      <EntityFormPage mode={mode} {...entityConfigs.question} />
+      <QuestionWorkflowForm mode={mode} />
     </Layout>
   );
 }

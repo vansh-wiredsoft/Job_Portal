@@ -4,6 +4,7 @@ import sessionReducer from "./sessionSlice";
 import companyReducer from "./companySlice";
 import userUploadReducer from "./userUploadSlice";
 import questionUploadReducer from "./questionUploadSlice";
+import questionHierarchyReducer from "./questionHierarchySlice";
 
 const store = configureStore({
   reducer: {
@@ -12,6 +13,7 @@ const store = configureStore({
     company: companyReducer,
     userUpload: userUploadReducer,
     questionUpload: questionUploadReducer,
+    questionHierarchy: questionHierarchyReducer,
   },
 });
 
