@@ -1,22 +1,20 @@
+import { useLocation } from "react-router-dom";
+import { Alert, Stack } from "@mui/material";
 import Layout from "../../layouts/commonLayout/Layout";
-import ExcelUploadGrid from "../../components/shared/ExcelUploadGrid";
-import {
-  clearQuestionUploadError,
-  resetQuestionUpload,
-  uploadQuestionFile,
-} from "../../store/questionUploadSlice";
+import EntityManagementTable from "../../components/shared/EntityManagementTable";
+import { entityConfigs } from "../../data/adminEntityConfigs";
 
 export default function Questions() {
+  const location = useLocation();
+  const feedback = location.state?.feedback;
+  const config = entityConfigs.question;
+
   return (
     <Layout role="admin" title="Question Bank">
-      <ExcelUploadGrid
-        title="Upload Questions"
-        description="Import questions through Excel and review all records before publishing to sessions."
-        uploadSelector={(state) => state.questionUpload}
-        uploadThunk={uploadQuestionFile}
-        resetUploadAction={resetQuestionUpload}
-        clearUploadErrorAction={clearQuestionUploadError}
-      />
+      <Stack spacing={2}>
+        {feedback && <Alert severity={feedback.severity}>{feedback.message}</Alert>}
+        <EntityManagementTable {...config} />
+      </Stack>
     </Layout>
   );
 }

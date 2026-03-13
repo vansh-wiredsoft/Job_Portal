@@ -3,8 +3,14 @@ import { useSelector } from "react-redux";
 
 import AdminDashboard from "../pages/admin/Dashboard";
 import CompanyData from "../pages/admin/CompanyData";
+import CompanyDataForm from "../pages/admin/CompanyDataForm";
+import CompanyDataView from "../pages/admin/CompanyDataView";
 import CompanyUsers from "../pages/admin/CompanyUsers";
+import CompanyUsersForm from "../pages/admin/CompanyUsersForm";
+import CompanyUsersView from "../pages/admin/CompanyUsersView";
 import Questions from "../pages/admin/Questions";
+import QuestionsForm from "../pages/admin/QuestionsForm";
+import QuestionsView from "../pages/admin/QuestionsView";
 import Sessions from "../pages/admin/Sessions";
 import Login from "../pages/auth/Login";
 import Profile from "../pages/common/Profile";
@@ -59,6 +65,30 @@ export default function AppRoutes() {
         }
       />
       <Route
+        path="/admin/company-data/add"
+        element={
+          <ProtectedRoute allowedRole="admin">
+            <CompanyDataForm mode="add" />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/company-data/:id"
+        element={
+          <ProtectedRoute allowedRole="admin">
+            <CompanyDataView />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/company-data/:id/edit"
+        element={
+          <ProtectedRoute allowedRole="admin">
+            <CompanyDataForm mode="edit" />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/admin/company-users"
         element={
           <ProtectedRoute allowedRole="admin">
@@ -67,10 +97,58 @@ export default function AppRoutes() {
         }
       />
       <Route
+        path="/admin/company-users/add"
+        element={
+          <ProtectedRoute allowedRole="admin">
+            <CompanyUsersForm mode="add" />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/company-users/:id"
+        element={
+          <ProtectedRoute allowedRole="admin">
+            <CompanyUsersView />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/company-users/:id/edit"
+        element={
+          <ProtectedRoute allowedRole="admin">
+            <CompanyUsersForm mode="edit" />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/admin/questions"
         element={
           <ProtectedRoute allowedRole="admin">
             <Questions />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/questions/add"
+        element={
+          <ProtectedRoute allowedRole="admin">
+            <QuestionsForm mode="add" />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/questions/:id"
+        element={
+          <ProtectedRoute allowedRole="admin">
+            <QuestionsView />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/questions/:id/edit"
+        element={
+          <ProtectedRoute allowedRole="admin">
+            <QuestionsForm mode="edit" />
           </ProtectedRoute>
         }
       />
