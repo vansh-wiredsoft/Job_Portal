@@ -1,19 +1,26 @@
 import BedtimeRoundedIcon from "@mui/icons-material/BedtimeRounded";
 import BoltRoundedIcon from "@mui/icons-material/BoltRounded";
+import DirectionsRunRoundedIcon from "@mui/icons-material/DirectionsRunRounded";
+import EmojiEventsRoundedIcon from "@mui/icons-material/EmojiEventsRounded";
 import FavoriteRoundedIcon from "@mui/icons-material/FavoriteRounded";
-import FitnessCenterRoundedIcon from "@mui/icons-material/FitnessCenterRounded";
-import LocalFireDepartmentRoundedIcon from "@mui/icons-material/LocalFireDepartmentRounded";
+import InsightsRoundedIcon from "@mui/icons-material/InsightsRounded";
+import LocalDiningRoundedIcon from "@mui/icons-material/LocalDiningRounded";
+import MonitorHeartRoundedIcon from "@mui/icons-material/MonitorHeartRounded";
 import PsychologyRoundedIcon from "@mui/icons-material/PsychologyRounded";
 import SelfImprovementRoundedIcon from "@mui/icons-material/SelfImprovementRounded";
 import SpaRoundedIcon from "@mui/icons-material/SpaRounded";
-import TipsAndUpdatesRoundedIcon from "@mui/icons-material/TipsAndUpdatesRounded";
+import StarsRoundedIcon from "@mui/icons-material/StarsRounded";
 import WaterDropRoundedIcon from "@mui/icons-material/WaterDropRounded";
+import WorkspacePremiumRoundedIcon from "@mui/icons-material/WorkspacePremiumRounded";
 import {
   alpha,
+  Avatar,
   Box,
-  Button,
   Chip,
   Divider,
+  Grid,
+  LinearProgress,
+  Paper,
   Stack,
   Typography,
 } from "@mui/material";
@@ -28,106 +35,138 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import Layout from "../../layouts/commonLayout/Layout";
 
-const metricCards = [
+const metrics = [
   {
     label: "Sleep",
     score: 4.5,
-    change: 62,
-    color: "#8b5cf6",
+    progress: 82,
+    change: "+62%",
+    color: "#7c3aed",
     icon: <BedtimeRoundedIcon fontSize="small" />,
-    sparkline: [32, 36, 38, 42, 45, 49, 55],
   },
   {
     label: "Stress",
     score: 5.0,
-    change: 47,
-    color: "#f97316",
+    progress: 88,
+    change: "+47%",
+    color: "#ea580c",
     icon: <PsychologyRoundedIcon fontSize="small" />,
-    sparkline: [28, 35, 41, 45, 46, 46, 50],
   },
   {
     label: "Nutrition",
     score: 4.4,
-    change: 41,
-    color: "#22c55e",
-    icon: <SpaRoundedIcon fontSize="small" />,
-    sparkline: [25, 27, 30, 33, 38, 40, 44],
+    progress: 79,
+    change: "+41%",
+    color: "#16a34a",
+    icon: <LocalDiningRoundedIcon fontSize="small" />,
   },
   {
     label: "Hydration",
     score: 4.6,
-    change: 55,
-    color: "#38bdf8",
+    progress: 84,
+    change: "+55%",
+    color: "#0284c7",
     icon: <WaterDropRoundedIcon fontSize="small" />,
-    sparkline: [18, 21, 24, 30, 35, 39, 46],
   },
   {
     label: "Digestion",
     score: 5.0,
-    change: 56,
-    color: "#84cc16",
-    icon: <TipsAndUpdatesRoundedIcon fontSize="small" />,
-    sparkline: [16, 23, 29, 35, 40, 45, 50],
+    progress: 91,
+    change: "+56%",
+    color: "#65a30d",
+    icon: <SpaRoundedIcon fontSize="small" />,
   },
   {
     label: "Activity",
     score: 4.5,
-    change: 56,
-    color: "#fb923c",
-    icon: <FitnessCenterRoundedIcon fontSize="small" />,
-    sparkline: [20, 22, 26, 31, 34, 40, 45],
+    progress: 77,
+    change: "+56%",
+    color: "#f59e0b",
+    icon: <DirectionsRunRoundedIcon fontSize="small" />,
   },
   {
     label: "Pain/Posture",
     score: 4.8,
-    change: 45,
-    color: "#d946ef",
+    progress: 81,
+    change: "+45%",
+    color: "#c026d3",
     icon: <SelfImprovementRoundedIcon fontSize="small" />,
-    sparkline: [24, 25, 28, 31, 35, 41, 48],
   },
   {
     label: "Energy",
     score: 4.2,
-    change: 35,
-    color: "#facc15",
+    progress: 74,
+    change: "+35%",
+    color: "#ca8a04",
     icon: <BoltRoundedIcon fontSize="small" />,
-    sparkline: [17, 20, 21, 24, 30, 34, 39],
   },
   {
     label: "Emotional",
     score: 5.0,
-    change: 67,
-    color: "#34d399",
+    progress: 90,
+    change: "+67%",
+    color: "#059669",
     icon: <FavoriteRoundedIcon fontSize="small" />,
-    sparkline: [15, 18, 24, 28, 35, 42, 50],
+  },
+];
+
+const highlightStats = [
+  {
+    label: "Wellness score",
+    value: "92.5",
+    note: "Up from last check-in",
+    color: "#0f766e",
+    icon: <MonitorHeartRoundedIcon fontSize="small" />,
+  },
+  {
+    label: "XP today",
+    value: "340 pts",
+    note: "6 of 8 focus steps complete",
+    color: "#c2410c",
+    icon: <StarsRoundedIcon fontSize="small" />,
+  },
+  {
+    label: "Current level",
+    value: "Banyan Sapling",
+    note: "3 more days to next milestone",
+    color: "#4d7c0f",
+    icon: <WorkspacePremiumRoundedIcon fontSize="small" />,
+  },
+  {
+    label: "Active streak",
+    value: "7 days",
+    note: "Consistency is driving recovery",
+    color: "#1d4ed8",
+    icon: <EmojiEventsRoundedIcon fontSize="small" />,
   },
 ];
 
 const trendData = [
-  { name: "wk1", social: 28, hydration: 32, energy: 36, sleep: 30 },
-  { name: "wk2", social: 31, hydration: 35, energy: 38, sleep: 34 },
-  { name: "wk3", social: 39, hydration: 41, energy: 45, sleep: 37 },
-  { name: "wk4", social: 45, hydration: 48, energy: 51, sleep: 42 },
-  { name: "wk5", social: 53, hydration: 58, energy: 57, sleep: 49 },
-  { name: "wk6", social: 68, hydration: 71, energy: 69, sleep: 63 },
-  { name: "wk7", social: 78, hydration: 74, energy: 76, sleep: 72 },
-  { name: "wk8", social: 88, hydration: 82, energy: 80, sleep: 76 },
+  { name: "W1", social: 2.8, hydration: 3.2, energy: 3.4 },
+  { name: "W2", social: 3.0, hydration: 3.5, energy: 3.6 },
+  { name: "W3", social: 3.2, hydration: 3.7, energy: 3.8 },
+  { name: "W4", social: 3.5, hydration: 4.0, energy: 4.0 },
+  { name: "W5", social: 3.8, hydration: 4.2, energy: 4.1 },
+  { name: "W6", social: 4.0, hydration: 4.4, energy: 4.3 },
+  { name: "W7", social: 4.3, hydration: 4.5, energy: 4.4 },
+  { name: "W8", social: 4.6, hydration: 4.7, energy: 4.5 },
 ];
 
-const wellnessBreakdown = [
-  { name: "Sleep", value: 14, color: "#8b5cf6" },
-  { name: "Stress", value: 10, color: "#f97316" },
-  { name: "Nutrition", value: 16, color: "#22c55e" },
-  { name: "Hydration", value: 12, color: "#38bdf8" },
-  { name: "Digestion", value: 11, color: "#84cc16" },
-  { name: "Activity", value: 13, color: "#fb923c" },
-  { name: "Pain/Posture", value: 9, color: "#d946ef" },
-  { name: "Energy", value: 15, color: "#facc15" },
+const wellnessIndexData = [
+  { name: "Sleep", value: 14, color: "#7c3aed" },
+  { name: "Stress", value: 10, color: "#ea580c" },
+  { name: "Nutrition", value: 16, color: "#16a34a" },
+  { name: "Hydration", value: 12, color: "#0284c7" },
+  { name: "Digestion", value: 11, color: "#65a30d" },
+  { name: "Activity", value: 13, color: "#f59e0b" },
+  { name: "Pain/Posture", value: 9, color: "#c026d3" },
+  { name: "Energy", value: 15, color: "#ca8a04" },
 ];
 
 const doshaData = [
-  { name: "Vata", value: 30, color: "#38bdf8" },
+  { name: "Vata", value: 30, color: "#0ea5e9" },
   { name: "Pitta", value: 34, color: "#f97316" },
   { name: "Kapha", value: 36, color: "#22c55e" },
 ];
@@ -135,546 +174,610 @@ const doshaData = [
 const suggestions = [
   {
     title: "Digestion",
-    risk: "T2 - 20 flagged",
-    accent: "#84cc16",
-    prompts: [
-      "Do you experience bloating or heaviness after meals?",
-      "Do you have irregular bowel movements this week?",
+    flagged: "T2 - 20 flagged",
+    color: "#65a30d",
+    items: [
+      "Eat lighter dinners and keep a 2-hour gap before sleep.",
+      "Add warm water and fiber-rich foods during workdays.",
     ],
   },
   {
     title: "Stress",
-    risk: "T2 - 30 flagged",
-    accent: "#f97316",
-    prompts: [
-      "How often do you feel overwhelmed during work hours?",
-      "Does stress disrupt your sleep or meal timing?",
+    flagged: "T2 - 30 flagged",
+    color: "#ea580c",
+    items: [
+      "Schedule two short breaks between long task blocks.",
+      "Reduce late caffeine and add a wind-down routine.",
     ],
   },
   {
     title: "Pain/Posture",
-    risk: "T2 - 19 flagged",
-    accent: "#d946ef",
-    prompts: [
-      "Do you experience back or neck discomfort at your desk?",
-      "Can you unwind after long sitting periods?",
+    flagged: "T2 - 19 flagged",
+    color: "#c026d3",
+    items: [
+      "Stand and stretch every 45 minutes during desk work.",
+      "Raise laptop height to reduce neck strain.",
     ],
   },
 ];
 
-const moodScale = ["sad", "neutral", "calm", "good", "great"];
+const focusActions = [
+  {
+    title: "Hydration Mission",
+    caption: "Progress KPI",
+    detail: "Drink 8 glasses today. You're almost there.",
+    accent: "#0284c7",
+    progress: 75,
+    value: "6 / 8",
+  },
+  {
+    title: "Sleep Before 10 PM",
+    caption: "Recovery KPI",
+    detail: "One focused habit is improving your sleep consistency.",
+    accent: "#7c3aed",
+    progress: 68,
+    value: "Committed",
+  },
+  {
+    title: "Move Your Body",
+    caption: "Activity KPI",
+    detail: "Add one quick walk or light session before evening.",
+    accent: "#f59e0b",
+    progress: 52,
+    value: "15 min",
+  },
+];
 
-function Sparkline({ points, color }) {
-  const width = 96;
-  const height = 30;
-  const min = Math.min(...points);
-  const max = Math.max(...points);
-  const range = max - min || 1;
-  const path = points
-    .map((point, index) => {
-      const x = (index / (points.length - 1)) * width;
-      const y = height - ((point - min) / range) * (height - 6) - 3;
-      return `${x},${y}`;
-    })
-    .join(" ");
+const leaderboard = [
+  { name: "Priya S.", team: "Engineering - Delhi", delta: "+42%" },
+  { name: "Rahul M.", team: "Product - Mumbai", delta: "+38%" },
+  { name: "Anjali K.", team: "HR - BLR", delta: "+35%" },
+  { name: "Amit R.", team: "Finance - Delhi", delta: "+31%", current: true },
+  { name: "Sneha P.", team: "Marketing - Pune", delta: "+28%" },
+];
 
+function SectionCard({ children, sx }) {
   return (
-    <Box sx={{ mt: "auto" }}>
-      <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none">
-        <polyline
-          fill="none"
-          stroke={color}
-          strokeWidth="2.25"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          points={path}
-        />
-        <circle
-          cx={width}
-          cy={Number(path.split(" ").at(-1)?.split(",")[1] || height / 2)}
-          r="3.2"
-          fill={color}
-        />
-      </svg>
-    </Box>
+    <Paper
+      elevation={0}
+      sx={{
+        p: { xs: 2, sm: 2.5 },
+        borderRadius: 3,
+        border: "1px solid",
+        borderColor: "divider",
+        bgcolor: "rgba(255,255,255,0.86)",
+        ...sx,
+      }}
+    >
+      {children}
+    </Paper>
   );
 }
 
 function MetricCard({ item }) {
   return (
-    <Box
+    <Paper
+      elevation={0}
       sx={{
-        minHeight: 128,
-        p: 1.75,
+        p: 2,
         borderRadius: 3,
-        border: `1px solid ${alpha(item.color, 0.4)}`,
-        background: `linear-gradient(180deg, ${alpha("#0a1e13", 0.88)} 0%, ${alpha("#0c2316", 0.96)} 100%)`,
-        boxShadow: `inset 0 0 0 1px ${alpha("#d9f99d", 0.04)}`,
-        display: "flex",
-        flexDirection: "column",
-        gap: 0.65,
+        border: "1px solid",
+        borderColor: alpha(item.color, 0.22),
+        background: `linear-gradient(135deg, ${alpha(item.color, 0.08)} 0%, rgba(255,255,255,0.94) 100%)`,
+        height: "100%",
       }}
     >
-      <Box
-        sx={{
-          width: 28,
-          height: 28,
-          borderRadius: "50%",
-          display: "grid",
-          placeItems: "center",
-          bgcolor: alpha(item.color, 0.16),
-          color: item.color,
-        }}
-      >
-        {item.icon}
-      </Box>
-      <Typography sx={{ color: alpha("#f7fee7", 0.72), fontSize: 12 }}>
+      <Stack direction="row" justifyContent="space-between" alignItems="center">
+        <Box
+          sx={{
+            width: 40,
+            height: 40,
+            borderRadius: 2.5,
+            display: "grid",
+            placeItems: "center",
+            bgcolor: alpha(item.color, 0.12),
+            color: item.color,
+          }}
+        >
+          {item.icon}
+        </Box>
+        <Chip
+          label={item.change}
+          size="small"
+          sx={{
+            bgcolor: alpha(item.color, 0.1),
+            color: item.color,
+            fontWeight: 700,
+          }}
+        />
+      </Stack>
+
+      <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>
         {item.label}
       </Typography>
-      <Typography sx={{ color: item.color, fontWeight: 800, fontSize: 28, lineHeight: 1 }}>
-        {item.score.toFixed(1)}
+      <Typography variant="h4" sx={{ mt: 0.5, fontWeight: 800, color: item.color }}>
+        {item.score}
       </Typography>
-      <Typography sx={{ color: item.color, fontWeight: 700, fontSize: 12 }}>
-        ▲ {item.change}%
-      </Typography>
-      <Sparkline points={item.sparkline} color={item.color} />
-    </Box>
+      <LinearProgress
+        variant="determinate"
+        value={item.progress}
+        sx={{
+          mt: 2,
+          height: 8,
+          borderRadius: 999,
+          bgcolor: alpha(item.color, 0.12),
+          "& .MuiLinearProgress-bar": {
+            borderRadius: 999,
+            bgcolor: item.color,
+          },
+        }}
+      />
+    </Paper>
   );
 }
 
-function RingCenterLabel({ value, subtitle }) {
+function HighlightStat({ item }) {
   return (
-    <Box
+    <Paper
+      elevation={0}
       sx={{
-        position: "absolute",
-        inset: 0,
-        display: "grid",
-        placeItems: "center",
-        pointerEvents: "none",
-        textAlign: "center",
+        p: 2,
+        borderRadius: 3,
+        border: "1px solid",
+        borderColor: alpha(item.color, 0.18),
+        bgcolor: alpha(item.color, 0.04),
+        height: "100%",
       }}
     >
-      <Box>
-        <Typography sx={{ color: "#f8fafc", fontWeight: 800, fontSize: 18 }}>
-          {value}
-        </Typography>
-        <Typography sx={{ color: alpha("#d9f99d", 0.65), fontSize: 12 }}>
-          {subtitle}
-        </Typography>
-      </Box>
-    </Box>
+      <Stack direction="row" spacing={1.2} alignItems="center">
+        <Avatar sx={{ bgcolor: alpha(item.color, 0.14), color: item.color, width: 36, height: 36 }}>
+          {item.icon}
+        </Avatar>
+        <Box sx={{ minWidth: 0 }}>
+          <Typography variant="body2" color="text.secondary">
+            {item.label}
+          </Typography>
+          <Typography
+            sx={{
+              fontWeight: 800,
+              color: item.color,
+              fontSize: item.value.length > 10 ? 22 : 30,
+              lineHeight: 1.15,
+            }}
+          >
+            {item.value}
+          </Typography>
+        </Box>
+      </Stack>
+      <Typography variant="body2" color="text.secondary" sx={{ mt: 1.2 }}>
+        {item.note}
+      </Typography>
+    </Paper>
   );
 }
 
 export default function Dashboard() {
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        background:
-          "radial-gradient(circle at top left, rgba(34,197,94,0.15), transparent 28%), radial-gradient(circle at 85% 0%, rgba(250,204,21,0.12), transparent 22%), linear-gradient(180deg, #041109 0%, #07170d 100%)",
-        color: "#f8fafc",
-        p: { xs: 1.5, md: 2.5 },
-      }}
-    >
-      <Box
-        sx={{
-          maxWidth: 1440,
-          mx: "auto",
-          p: { xs: 1.5, md: 2.25 },
-          borderRadius: 5,
-          border: "1px solid rgba(96,165,250,0.08)",
-          background:
-            "linear-gradient(180deg, rgba(4,20,9,0.92) 0%, rgba(5,18,10,0.98) 100%)",
-          boxShadow: "0 24px 80px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(163,230,53,0.04)",
-        }}
-      >
-        <Stack
-          direction={{ xs: "column", lg: "row" }}
-          alignItems={{ xs: "flex-start", lg: "center" }}
-          justifyContent="space-between"
-          spacing={2}
-          sx={{ pb: 2.5 }}
+    <Layout role="user" title="Wellness Dashboard">
+      <Stack spacing={2.5}>
+        <SectionCard
+          sx={{
+            overflow: "hidden",
+            background:
+              "linear-gradient(135deg, rgba(15,118,110,0.12) 0%, rgba(255,255,255,0.92) 50%, rgba(245,158,11,0.1) 100%)",
+            position: "relative",
+          }}
         >
-          <Stack direction="row" spacing={1.5} alignItems="center">
-            <Box
-              sx={{
-                width: 42,
-                height: 22,
-                border: "2px solid #84cc16",
-                borderRadius: 999,
-                position: "relative",
-                "&::before": {
-                  content: '""',
-                  position: "absolute",
-                  top: 2,
-                  left: 2,
-                  width: 14,
-                  height: 14,
-                  borderRadius: "50%",
-                  border: "2px solid #84cc16",
-                },
-                "&::after": {
-                  content: '""',
-                  position: "absolute",
-                  top: 2,
-                  right: 2,
-                  width: 14,
-                  height: 14,
-                  borderRadius: "50%",
-                  border: "2px solid #84cc16",
-                },
-              }}
-            />
+          <Box
+            sx={{
+              position: "absolute",
+              top: -40,
+              right: -30,
+              width: 220,
+              height: 220,
+              borderRadius: "50%",
+              background: "radial-gradient(circle, rgba(15,118,110,0.12), transparent 68%)",
+            }}
+          />
+          <Stack
+            direction={{ xs: "column", lg: "row" }}
+            justifyContent="space-between"
+            spacing={2}
+            alignItems={{ lg: "center" }}
+            sx={{ position: "relative" }}
+          >
             <Box>
-              <Typography sx={{ fontWeight: 900, letterSpacing: 1.1, color: "#84cc16" }}>
-                AYUMONK
+              <Typography variant="overline" sx={{ color: "primary.main", fontWeight: 700 }}>
+                Personal Wellness Journey
               </Typography>
-              <Typography sx={{ fontSize: 11, color: alpha("#f7fee7", 0.58), letterSpacing: 1.3 }}>
-                WELLNESS INTELLIGENCE PLATFORM
+              <Typography variant="h4" sx={{ fontWeight: 800, mt: 0.5 }}>
+                Welcome back, Ayumonk User
+              </Typography>
+              <Typography color="text.secondary" sx={{ mt: 1, maxWidth: 760 }}>
+                Your dashboard now blends the wellness overview with progress, streak, and performance-style cards inspired by the other product tabs.
               </Typography>
             </Box>
-          </Stack>
-
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={1.2} alignItems={{ sm: "center" }}>
-            <Stack
-              direction="row"
-              spacing={1}
-              sx={{
-                p: 0.7,
-                borderRadius: 999,
-                bgcolor: "rgba(2,12,7,0.88)",
-                border: "1px solid rgba(132,204,22,0.12)",
-              }}
-            >
-              <Button
-                variant="contained"
-                startIcon={<SpaRoundedIcon />}
-                sx={{
-                  borderRadius: 999,
-                  px: 2,
-                  bgcolor: "#84cc16",
-                  color: "#11230e",
-                  fontWeight: 800,
-                  boxShadow: "none",
-                }}
-              >
-                My Wellness
-              </Button>
-              <Button sx={{ color: alpha("#f8fafc", 0.78), borderRadius: 999, px: 2 }}>
-                Challenges
-              </Button>
-              <Button sx={{ color: alpha("#f8fafc", 0.78), borderRadius: 999, px: 2 }}>
-                HR Analytics
-              </Button>
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+              <Chip label="My Wellness" color="primary" sx={{ fontWeight: 700 }} />
+              <Chip label="Challenges" variant="outlined" sx={{ fontWeight: 700 }} />
+              <Chip label="HR Analytics" variant="outlined" sx={{ fontWeight: 700 }} />
             </Stack>
-            <Typography sx={{ color: alpha("#f8fafc", 0.54), fontSize: 12 }}>
-              Sun, 8 Mar, 26
-            </Typography>
           </Stack>
-        </Stack>
+        </SectionCard>
 
-        <Divider sx={{ borderColor: "rgba(132,204,22,0.08)" }} />
-
-        <Typography sx={{ color: alpha("#a3e635", 0.72), fontSize: 13, py: 2.25 }}>
-          Your Personal Wellness Journey - Nutrition - Lifestyle - Wellness - Dosha-aligned Ayurveda
-        </Typography>
-
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: {
-              xs: "repeat(1, minmax(0, 1fr))",
-              sm: "repeat(2, minmax(0, 1fr))",
-              md: "repeat(3, minmax(0, 1fr))",
-              lg: "repeat(5, minmax(0, 1fr))",
-              xl: "repeat(9, minmax(0, 1fr))",
-            },
-            gap: 1.5,
-          }}
-        >
-          {metricCards.map((item) => (
-            <MetricCard key={item.label} item={item} />
+        <Grid container spacing={2}>
+          {highlightStats.map((item) => (
+            <Grid key={item.label} size={{ xs: 12, sm: 6, xl: 3 }}>
+              <HighlightStat item={item} />
+            </Grid>
           ))}
-        </Box>
+        </Grid>
 
-        <Box
-          sx={{
-            mt: 2,
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", lg: "1.1fr 2.8fr 1.2fr" },
-            gap: 1.75,
-          }}
-        >
-          <Box
-            sx={{
-              p: 2.2,
-              borderRadius: 4,
-              border: "1px solid rgba(132,204,22,0.12)",
-              bgcolor: "rgba(5, 24, 11, 0.88)",
-            }}
-          >
-            <Typography sx={{ color: alpha("#a3e635", 0.72), fontSize: 12, mb: 2, fontWeight: 700 }}>
-              WELLNESS INDEX
-            </Typography>
-            <Box sx={{ position: "relative", height: 210 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={wellnessBreakdown}
-                    dataKey="value"
-                    nameKey="name"
-                    innerRadius={54}
-                    outerRadius={80}
-                    stroke="none"
-                    paddingAngle={3}
-                  >
-                    {wellnessBreakdown.map((entry) => (
-                      <Cell key={entry.name} fill={entry.color} />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
-              <RingCenterLabel value="92.5" subtitle="/ 100" />
-            </Box>
+        <Grid container spacing={2}>
+          {metrics.map((item) => (
+            <Grid key={item.label} size={{ xs: 12, sm: 6, md: 4, xl: 4 / 3 }}>
+              <MetricCard item={item} />
+            </Grid>
+          ))}
+        </Grid>
 
-            <Box
-              sx={{
-                display: "grid",
-                gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                gap: 1,
-                mt: 1,
-              }}
-            >
-              {wellnessBreakdown.map((item) => (
-                <Stack key={item.name} direction="row" spacing={0.8} alignItems="center">
-                  <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: item.color }} />
-                  <Typography sx={{ fontSize: 11, color: alpha("#f8fafc", 0.66) }}>
-                    {item.name}
+        <Grid container spacing={2.5}>
+          <Grid size={{ xs: 12, lg: 8.2 }}>
+            <Grid container spacing={2.5}>
+              <Grid size={{ xs: 12, lg: 4.4 }}>
+                <SectionCard sx={{ height: "100%" }}>
+                  <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                    Wellness Index
                   </Typography>
-                </Stack>
-              ))}
-            </Box>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    Overall score based on your key wellness factors
+                  </Typography>
 
-            <Chip
-              label="▲ 43% from baseline"
-              sx={{
-                mt: 2.25,
-                bgcolor: alpha("#22c55e", 0.14),
-                color: "#4ade80",
-                fontWeight: 800,
-              }}
-            />
-          </Box>
+                  <Box sx={{ position: "relative", height: 230 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={wellnessIndexData}
+                          dataKey="value"
+                          innerRadius={62}
+                          outerRadius={90}
+                          paddingAngle={2}
+                          stroke="none"
+                        >
+                          {wellnessIndexData.map((entry) => (
+                            <Cell key={entry.name} fill={entry.color} />
+                          ))}
+                        </Pie>
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        inset: 0,
+                        display: "grid",
+                        placeItems: "center",
+                        textAlign: "center",
+                      }}
+                    >
+                      <Box>
+                        <Typography variant="h3" sx={{ fontWeight: 800 }}>
+                          92.5
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          / 100
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Box>
 
-          <Box
-            sx={{
-              p: 2.2,
-              borderRadius: 4,
-              border: "1px solid rgba(132,204,22,0.12)",
-              bgcolor: "rgba(5, 24, 11, 0.88)",
-            }}
-          >
-            <Stack direction="row" justifyContent="space-between" spacing={2} sx={{ mb: 2.5 }}>
-              <Box>
-                <Typography sx={{ fontWeight: 800 }}>Wellness Trends</Typography>
-                <Typography sx={{ color: alpha("#a3e635", 0.68), fontSize: 12 }}>
-                  Bold line = most improved recently
-                </Typography>
-              </Box>
-              <Stack direction="row" spacing={0.8}>
-                <Chip label="Daily" size="small" sx={{ bgcolor: "rgba(15,23,10,0.86)", color: alpha("#f8fafc", 0.52) }} />
-                <Chip label="Weekly" size="small" sx={{ bgcolor: "#84cc16", color: "#10210d", fontWeight: 800 }} />
-                <Chip label="Monthly" size="small" sx={{ bgcolor: "rgba(15,23,10,0.86)", color: alpha("#f8fafc", 0.52) }} />
-              </Stack>
-            </Stack>
-
-            <Box sx={{ height: 250 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={trendData}>
-                  <XAxis
-                    dataKey="name"
-                    tick={{ fill: "rgba(248,250,252,0.48)", fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis hide domain={[0, 100]} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#0a150d",
-                      border: "1px solid rgba(132,204,22,0.16)",
-                      borderRadius: "12px",
-                      color: "#f8fafc",
-                    }}
-                  />
-                  <Line type="monotone" dataKey="social" stroke="#f472b6" strokeWidth={3} dot={false} />
-                  <Line type="monotone" dataKey="hydration" stroke="#38bdf8" strokeWidth={2.2} dot={false} />
-                  <Line type="monotone" dataKey="energy" stroke="#84cc16" strokeWidth={1.8} dot={false} />
-                  <Line type="monotone" dataKey="sleep" stroke="#f59e0b" strokeWidth={1.8} dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
-            </Box>
-
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ mt: 1.25 }}>
-              <Chip label="Social ▲17%" sx={{ bgcolor: alpha("#f472b6", 0.14), color: "#f472b6", fontWeight: 700 }} />
-              <Chip label="Hydration ▲15%" sx={{ bgcolor: alpha("#38bdf8", 0.14), color: "#38bdf8", fontWeight: 700 }} />
-              <Typography sx={{ color: alpha("#f8fafc", 0.46), fontSize: 12, alignSelf: "center" }}>
-                tap any KPI tile to see full detail
-              </Typography>
-            </Stack>
-          </Box>
-
-          <Box
-            sx={{
-              p: 2.2,
-              borderRadius: 4,
-              border: "1px solid rgba(132,204,22,0.12)",
-              bgcolor: "rgba(5, 24, 11, 0.88)",
-            }}
-          >
-            <Typography sx={{ fontWeight: 800, mb: 2 }}>Dosha Profile</Typography>
-            <Box sx={{ position: "relative", height: 190 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={doshaData}
-                    dataKey="value"
-                    nameKey="name"
-                    innerRadius={42}
-                    outerRadius={72}
-                    stroke="none"
+                  <Stack
+                    direction="row"
+                    flexWrap="wrap"
+                    useFlexGap
+                    spacing={1}
+                    sx={{ rowGap: 1, mt: 1 }}
                   >
-                    {doshaData.map((entry) => (
-                      <Cell key={entry.name} fill={entry.color} />
+                    {wellnessIndexData.map((item) => (
+                      <Stack key={item.name} direction="row" spacing={0.8} alignItems="center">
+                        <Box sx={{ width: 10, height: 10, borderRadius: "50%", bgcolor: item.color }} />
+                        <Typography variant="caption" color="text.secondary">
+                          {item.name}
+                        </Typography>
+                      </Stack>
                     ))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
-            </Box>
+                  </Stack>
 
-            <Stack spacing={1.1} sx={{ mt: 1 }}>
-              {doshaData.map((item) => (
-                <Stack key={item.name} direction="row" alignItems="center" justifyContent="space-between">
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    <Box sx={{ width: 9, height: 9, borderRadius: "50%", bgcolor: item.color }} />
-                    <Typography sx={{ fontSize: 13, color: alpha("#f8fafc", 0.72) }}>
-                      {item.name}
+                  <Chip
+                    label="43% improvement from baseline"
+                    sx={{ mt: 2, bgcolor: alpha("#16a34a", 0.1), color: "#15803d", fontWeight: 700 }}
+                  />
+                </SectionCard>
+              </Grid>
+
+              <Grid size={{ xs: 12, lg: 7.6 }}>
+                <SectionCard sx={{ height: "100%" }}>
+                  <Stack
+                    direction={{ xs: "column", sm: "row" }}
+                    justifyContent="space-between"
+                    alignItems={{ sm: "center" }}
+                    spacing={1.5}
+                    sx={{ mb: 2 }}
+                  >
+                    <Box>
+                      <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                        Wellness Trends
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Weekly movement across your strongest improvement areas
+                      </Typography>
+                    </Box>
+                    <Stack direction="row" spacing={1}>
+                      <Chip label="Daily" size="small" variant="outlined" />
+                      <Chip label="Weekly" size="small" color="primary" />
+                      <Chip label="Monthly" size="small" variant="outlined" />
+                    </Stack>
+                  </Stack>
+
+                  <ResponsiveContainer width="100%" height={290}>
+                    <LineChart data={trendData}>
+                      <XAxis dataKey="name" />
+                      <YAxis domain={[2, 5]} />
+                      <Tooltip />
+                      <Line type="monotone" dataKey="social" stroke="#d946ef" strokeWidth={3} dot={false} />
+                      <Line type="monotone" dataKey="hydration" stroke="#0284c7" strokeWidth={3} dot={false} />
+                      <Line type="monotone" dataKey="energy" stroke="#ca8a04" strokeWidth={3} dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+
+                  <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ mt: 1.5 }}>
+                    <Chip label="Social +17%" sx={{ bgcolor: alpha("#d946ef", 0.1), color: "#a21caf", fontWeight: 700 }} />
+                    <Chip label="Hydration +15%" sx={{ bgcolor: alpha("#0284c7", 0.1), color: "#0369a1", fontWeight: 700 }} />
+                    <Typography variant="body2" color="text.secondary">
+                      Most stable gains are showing up in hydration and recovery.
                     </Typography>
                   </Stack>
-                  <Typography sx={{ fontWeight: 800, color: item.color }}>
-                    {item.value}%
-                  </Typography>
+                </SectionCard>
+              </Grid>
+
+              <Grid size={12}>
+                <SectionCard>
+                  <Stack
+                    direction={{ xs: "column", md: "row" }}
+                    justifyContent="space-between"
+                    spacing={1}
+                    sx={{ mb: 2 }}
+                  >
+                    <Box>
+                      <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                        Daily Focus Programs
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Borrowed from the challenge screens to make your next actions clearer
+                      </Typography>
+                    </Box>
+                    <Stack direction="row" spacing={1}>
+                      <Chip label="3 active" size="small" color="primary" />
+                      <Chip label="1 upcoming" size="small" variant="outlined" />
+                    </Stack>
+                  </Stack>
+
+                  <Grid container spacing={2}>
+                    {focusActions.map((item) => (
+                      <Grid key={item.title} size={{ xs: 12, md: 4 }}>
+                        <Paper
+                          variant="outlined"
+                          sx={{
+                            p: 2,
+                            borderRadius: 3,
+                            borderColor: alpha(item.accent, 0.22),
+                            background: `linear-gradient(180deg, ${alpha(item.accent, 0.05)} 0%, rgba(255,255,255,0.92) 100%)`,
+                            height: "100%",
+                          }}
+                        >
+                          <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+                            <Box>
+                              <Typography sx={{ fontWeight: 800 }}>{item.title}</Typography>
+                              <Typography variant="caption" sx={{ color: item.accent, fontWeight: 700 }}>
+                                {item.caption}
+                              </Typography>
+                            </Box>
+                            <Chip
+                              label={item.value}
+                              size="small"
+                              sx={{ bgcolor: alpha(item.accent, 0.1), color: item.accent, fontWeight: 700 }}
+                            />
+                          </Stack>
+                          <Typography variant="body2" color="text.secondary" sx={{ mt: 1.2, mb: 1.5 }}>
+                            {item.detail}
+                          </Typography>
+                          <LinearProgress
+                            variant="determinate"
+                            value={item.progress}
+                            sx={{
+                              height: 8,
+                              borderRadius: 999,
+                              bgcolor: alpha(item.accent, 0.12),
+                              "& .MuiLinearProgress-bar": {
+                                bgcolor: item.accent,
+                                borderRadius: 999,
+                              },
+                            }}
+                          />
+                        </Paper>
+                      </Grid>
+                    ))}
+                  </Grid>
+                </SectionCard>
+              </Grid>
+            </Grid>
+          </Grid>
+
+          <Grid size={{ xs: 12, lg: 3.8 }}>
+            <Stack spacing={2.5}>
+              <SectionCard>
+                <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                  Dosha Profile
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Balanced composition based on the latest assessment
+                </Typography>
+
+                <ResponsiveContainer width="100%" height={220}>
+                  <PieChart>
+                    <Pie data={doshaData} dataKey="value" innerRadius={48} outerRadius={82} stroke="none">
+                      {doshaData.map((entry) => (
+                        <Cell key={entry.name} fill={entry.color} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+
+                <Stack spacing={1.2}>
+                  {doshaData.map((item) => (
+                    <Stack key={item.name} direction="row" justifyContent="space-between" alignItems="center">
+                      <Stack direction="row" spacing={1} alignItems="center">
+                        <Box sx={{ width: 10, height: 10, borderRadius: "50%", bgcolor: item.color }} />
+                        <Typography variant="body2">{item.name}</Typography>
+                      </Stack>
+                      <Typography sx={{ fontWeight: 700, color: item.color }}>{item.value}%</Typography>
+                    </Stack>
+                  ))}
                 </Stack>
-              ))}
+
+                <Divider sx={{ my: 2 }} />
+
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                  Today&apos;s Mood Check
+                </Typography>
+                <Stack direction="row" spacing={1} justifyContent="space-between">
+                  {["Sad", "Low", "Okay", "Good", "Great"].map((label, index) => (
+                    <Chip
+                      key={label}
+                      label={label}
+                      color={index === 3 ? "primary" : "default"}
+                      variant={index === 3 ? "filled" : "outlined"}
+                      sx={{ minWidth: 0 }}
+                    />
+                  ))}
+                </Stack>
+              </SectionCard>
+
+              <SectionCard>
+                <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1.5 }}>
+                  <Box>
+                    <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                      Weekly Leaderboard
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Friendly benchmark from your peer wellness cohort
+                    </Typography>
+                  </Box>
+                  <InsightsRoundedIcon color="primary" />
+                </Stack>
+
+                <Stack spacing={1.2}>
+                  {leaderboard.map((item, index) => (
+                    <Paper
+                      key={item.name}
+                      variant="outlined"
+                      sx={{
+                        p: 1.4,
+                        borderRadius: 2.5,
+                        borderColor: item.current ? alpha("#0f766e", 0.3) : "divider",
+                        bgcolor: item.current ? alpha("#0f766e", 0.06) : "transparent",
+                      }}
+                    >
+                      <Stack direction="row" justifyContent="space-between" alignItems="center">
+                        <Stack direction="row" spacing={1.2} alignItems="center">
+                          <Typography sx={{ width: 24, fontWeight: 800, color: index < 3 ? "#c2410c" : "text.secondary" }}>
+                            {index + 1}
+                          </Typography>
+                          <Box>
+                            <Typography sx={{ fontWeight: item.current ? 800 : 700 }}>
+                              {item.current ? `4th - You (${item.name})` : item.name}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {item.team}
+                            </Typography>
+                          </Box>
+                        </Stack>
+                        <Typography sx={{ fontWeight: 800, color: item.current ? "#15803d" : "#0f766e" }}>
+                          {item.delta}
+                        </Typography>
+                      </Stack>
+                    </Paper>
+                  ))}
+                </Stack>
+              </SectionCard>
             </Stack>
+          </Grid>
+        </Grid>
 
-            <Divider sx={{ my: 2, borderColor: "rgba(132,204,22,0.08)" }} />
-
-            <Typography sx={{ fontSize: 12, color: alpha("#a3e635", 0.68), mb: 1.25 }}>
-              Today&apos;s Mood Check
-            </Typography>
-            <Stack direction="row" justifyContent="space-between">
-              {moodScale.map((mood, index) => (
-                <Box
-                  key={mood}
-                  sx={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: "50%",
-                    display: "grid",
-                    placeItems: "center",
-                    fontSize: 16,
-                    bgcolor: index === 2 ? "rgba(250,204,21,0.18)" : "rgba(248,250,252,0.06)",
-                    border: "1px solid rgba(250,204,21,0.14)",
-                  }}
-                >
-                  {["☹", "◔", "☺", "☻", "😄"][index]}
-                </Box>
-              ))}
-            </Stack>
-          </Box>
-        </Box>
-
-        <Box
-          sx={{
-            mt: 2,
-            p: 1.75,
-            borderRadius: 4,
-            border: "1px solid rgba(132,204,22,0.12)",
-            bgcolor: "rgba(8, 29, 11, 0.88)",
-          }}
-        >
+        <SectionCard>
           <Stack
             direction={{ xs: "column", md: "row" }}
             justifyContent="space-between"
             spacing={1}
-            sx={{ mb: 1.5 }}
+            sx={{ mb: 2 }}
           >
-            <Typography sx={{ color: "#84cc16", fontWeight: 800 }}>
-              Ayumonk Lifestyle Suggestions - Focus Areas This Week
-            </Typography>
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                Lifestyle Suggestions
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Focus areas this week using static wellness signals
+              </Typography>
+            </Box>
             <Stack direction="row" spacing={1}>
-              <Chip label="Tier 1 - KPI risk" size="small" sx={{ bgcolor: "rgba(132,204,22,0.12)", color: "#a3e635" }} />
-              <Chip label="Tier 2 - Question score" size="small" sx={{ bgcolor: "rgba(245,158,11,0.12)", color: "#fbbf24" }} />
+              <Chip label="Tier 1 - KPI risk" size="small" sx={{ fontWeight: 700 }} />
+              <Chip label="Tier 2 - Question score" size="small" variant="outlined" sx={{ fontWeight: 700 }} />
             </Stack>
           </Stack>
 
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: { xs: "1fr", lg: "repeat(3, minmax(0, 1fr))" },
-              gap: 1.5,
-            }}
-          >
+          <Grid container spacing={2}>
             {suggestions.map((item) => (
-              <Box
-                key={item.title}
-                sx={{
-                  p: 1.5,
-                  borderRadius: 3,
-                  border: `1px solid ${alpha(item.accent, 0.22)}`,
-                  bgcolor: alpha("#0b190d", 0.92),
-                  boxShadow: `inset 3px 0 0 ${item.accent}`,
-                }}
-              >
-                <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1.2 }}>
-                  <Typography sx={{ fontWeight: 800, color: item.accent }}>
-                    {item.title}
-                  </Typography>
-                  <Chip
-                    label={item.risk}
-                    size="small"
-                    sx={{
-                      bgcolor: alpha("#f59e0b", 0.14),
-                      color: "#fbbf24",
-                      fontWeight: 700,
-                    }}
-                  />
-                </Stack>
-                <Stack spacing={0.9}>
-                  {item.prompts.map((prompt) => (
+              <Grid key={item.title} size={{ xs: 12, md: 4 }}>
+                <Paper
+                  variant="outlined"
+                  sx={{
+                    p: 2,
+                    borderRadius: 3,
+                    borderLeft: `4px solid ${item.color}`,
+                    height: "100%",
+                  }}
+                >
+                  <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1.5 }}>
+                    <Typography sx={{ fontWeight: 800, color: item.color }}>
+                      {item.title}
+                    </Typography>
                     <Chip
-                      key={prompt}
-                      label={prompt}
-                      icon={<LocalFireDepartmentRoundedIcon sx={{ color: `${item.accent} !important` }} />}
-                      sx={{
-                        justifyContent: "flex-start",
-                        maxWidth: "100%",
-                        color: alpha("#f8fafc", 0.68),
-                        bgcolor: alpha("#f59e0b", 0.08),
-                        "& .MuiChip-label": {
-                          display: "block",
-                          whiteSpace: "normal",
-                        },
-                      }}
+                      label={item.flagged}
+                      size="small"
+                      sx={{ bgcolor: alpha(item.color, 0.1), color: item.color, fontWeight: 700 }}
                     />
-                  ))}
-                </Stack>
-              </Box>
+                  </Stack>
+                  <Stack spacing={1}>
+                    {item.items.map((text) => (
+                      <Box
+                        key={text}
+                        sx={{
+                          p: 1.2,
+                          borderRadius: 2,
+                          bgcolor: alpha(item.color, 0.06),
+                        }}
+                      >
+                        <Typography variant="body2" color="text.secondary">
+                          {text}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Stack>
+                </Paper>
+              </Grid>
             ))}
-          </Box>
-        </Box>
-      </Box>
-    </Box>
+          </Grid>
+        </SectionCard>
+      </Stack>
+    </Layout>
   );
 }
